@@ -56,11 +56,11 @@ func _setup_environment() -> void:
 func _build_room() -> void:
 	var floor_material := _make_material(Color(0.7, 0.74, 0.76), 0.72)
 	floor_material.albedo_texture = _create_floor_texture()
-	floor_material.uv1_scale = Vector3(13.0, 1.0, 20.0)
+	floor_material.uv1_scale = Vector3(1.0, 1.0, 1.0)
 
 	var wall_material := _make_material(Color(0.65, 0.67, 0.68), 0.94)
 	wall_material.albedo_texture = _create_wall_texture()
-	wall_material.uv1_scale = Vector3(3.5, 2.0, 1.0)
+	wall_material.uv1_scale = Vector3(1.0, 1.0, 1.0)
 
 	var trim_material := _make_material(Color(0.19, 0.23, 0.25), 0.56, 0.24)
 	var ceiling_material := _make_material(Color(0.43, 0.47, 0.49), 0.92)
@@ -533,79 +533,151 @@ func steel_material() -> StandardMaterial3D:
 
 
 func _create_floor_texture() -> Texture2D:
+	# Broad, medium and fine noise create non-repeating polished concrete.
 	var image := Image.create(256, 256, false, Image.FORMAT_RGBA8)
-	var noise := FastNoiseLite.new()
-	noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
-	noise.frequency = 0.045
+	var broad := FastNoiseLite.new()
+	broad.seed = 3107
+	broad.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	broad.frequency = 0.012
+	var medium := FastNoiseLite.new()
+	medium.seed = 7219
+	medium.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	medium.frequency = 0.055
+	var fine := FastNoiseLite.new()
+	fine.seed = 4491
+	fine.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	fine.frequency = 0.22
+
 	for y in range(256):
 		for x in range(256):
-			var tile_x := x % 64
-			var tile_y := y % 64
-			var grain := noise.get_noise_2d(float(x), float(y)) * 0.035
-			var color := Color(0.53 + grain, 0.58 + grain, 0.60 + grain, 1.0)
-			if tile_x < 2 or tile_y < 2:
-				color = Color(0.20, 0.26, 0.29, 1.0)
-			elif tile_x > 60 or tile_y > 60:
-				color = color.darkened(0.045)
-			elif (x * 13 + y * 7) % 173 == 0:
-				color = color.darkened(0.10)
-			image.set_pixel(x, y, color)
+			var px := float(x)
+			var py := float(y)
+			var variation := broad.get_noise_2d(px, py) * 0.075
+			variation += medium.get_noise_2d(px, py) * 0.028
+			variation += fine.get_noise_2d(px, py) * 0.010
+			var base := Color(
+				clampf(0.53 + variation, 0.0, 1.0),
+				clampf(0.57 + variation, 0.0, 1.0),
+				clampf(0.60 + variation, 0.0, 1.0),
+				1.0
+			)
+			var speckle := fine.get_noise_2d(px * 1.7 + 41.0, py * 1.7 - 23.0)
+			if speckle > 0.72:
+				base = base.darkened(0.055)
+			elif speckle < -0.78:
+				base = base.lightened(0.035)
+			image.set_pixel(x, y, base)
+
 	return ImageTexture.create_from_image(image)
 
 
 func _create_wall_texture() -> Texture2D:
+	# Plaster variation has no repeating horizontal joints or striping.
 	var image := Image.create(256, 256, false, Image.FORMAT_RGBA8)
-	var noise := FastNoiseLite.new()
-	noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
-	noise.frequency = 0.035
+	var broad := FastNoiseLite.new()
+	broad.seed = 1831
+	broad.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	broad.frequency = 0.014
+	var medium := FastNoiseLite.new()
+	medium.seed = 5183
+	medium.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	medium.frequency = 0.075
+	var grain := FastNoiseLite.new()
+	grain.seed = 9381
+	grain.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	grain.frequency = 0.26
+
 	for y in range(256):
 		for x in range(256):
-			var grain := noise.get_noise_2d(float(x), float(y)) * 0.045
-			var color := Color(0.60 + grain, 0.63 + grain, 0.67 + grain, 1.0)
-			if y % 85 < 2:
-				color = Color(0.34, 0.39, 0.45, 1.0)
-			elif x % 128 < 2:
-				color = color.darkened(0.055)
-			elif y > 220 and (x + y) % 17 < 2:
-				color = color.darkened(0.07)
+			var px := float(x)
+			var py := float(y)
+			var variation := broad.get_noise_2d(px, py) * 0.045
+			variation += medium.get_noise_2d(px, py) * 0.023
+			variation += grain.get_noise_2d(px, py) * 0.009
+			var dampness := clampf((py / 256.0 - 0.78) * 0.11, 0.0, 0.035)
+			var color := Color(
+				clampf(0.59 + variation - dampness, 0.0, 1.0),
+				clampf(0.62 + variation - dampness, 0.0, 1.0),
+				clampf(0.67 + variation - dampness, 0.0, 1.0),
+				1.0
+			)
 			image.set_pixel(x, y, color)
+
 	return ImageTexture.create_from_image(image)
 
 
 func _create_outdoor_ground_texture() -> Texture2D:
+	# Irregular soil, moss and sparse gravel; the whole map uses this texture once.
 	var image := Image.create(256, 256, false, Image.FORMAT_RGBA8)
-	var broad_noise := FastNoiseLite.new()
-	broad_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
-	broad_noise.frequency = 0.018
-	var fine_noise := FastNoiseLite.new()
-	fine_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
-	fine_noise.frequency = 0.11
+	var broad := FastNoiseLite.new()
+	broad.seed = 9059
+	broad.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	broad.frequency = 0.018
+	var patches := FastNoiseLite.new()
+	patches.seed = 1673
+	patches.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	patches.frequency = 0.062
+	var gravel := FastNoiseLite.new()
+	gravel.seed = 8017
+	gravel.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	gravel.frequency = 0.24
+
 	for y in range(256):
 		for x in range(256):
-			var broad := broad_noise.get_noise_2d(float(x), float(y)) * 0.12
-			var fine := fine_noise.get_noise_2d(float(x), float(y)) * 0.035
-			var value := broad + fine
-			var color := Color(0.27 + value, 0.31 + value, 0.27 + value * 0.8, 1.0)
-			if (x * 17 + y * 29) % 211 < 3:
-				color = color.darkened(0.24)
-			elif (x * 7 + y * 11) % 97 < 2:
-				color = color.lightened(0.09)
+			var px := float(x)
+			var py := float(y)
+			var variation := broad.get_noise_2d(px, py) * 0.085
+			variation += patches.get_noise_2d(px, py) * 0.055
+			variation += gravel.get_noise_2d(px, py) * 0.018
+			var color := Color(
+				clampf(0.26 + variation, 0.0, 1.0),
+				clampf(0.30 + variation, 0.0, 1.0),
+				clampf(0.26 + variation * 0.82, 0.0, 1.0),
+				1.0
+			)
+			var pebble := gravel.get_noise_2d(px * 1.8 + 73.0, py * 1.8 + 19.0)
+			if pebble > 0.83:
+				color = color.lightened(0.10)
+			elif pebble < -0.88:
+				color = color.darkened(0.14)
 			image.set_pixel(x, y, color)
+
 	return ImageTexture.create_from_image(image)
 
 
 func _create_asphalt_texture() -> Texture2D:
+	# Fine aggregate and broad wear variation without long parallel bands.
 	var image := Image.create(256, 256, false, Image.FORMAT_RGBA8)
-	var noise := FastNoiseLite.new()
-	noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
-	noise.frequency = 0.12
+	var wear := FastNoiseLite.new()
+	wear.seed = 4559
+	wear.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	wear.frequency = 0.018
+	var aggregate := FastNoiseLite.new()
+	aggregate.seed = 7711
+	aggregate.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	aggregate.frequency = 0.21
+	var pits := FastNoiseLite.new()
+	pits.seed = 6191
+	pits.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	pits.frequency = 0.38
+
 	for y in range(256):
 		for x in range(256):
-			var grain := noise.get_noise_2d(float(x), float(y)) * 0.065
-			var color := Color(0.19 + grain, 0.20 + grain, 0.24 + grain, 1.0)
-			if (x * 19 + y * 31) % 487 < 2:
-				color = color.darkened(0.38)
+			var px := float(x)
+			var py := float(y)
+			var variation := wear.get_noise_2d(px, py) * 0.035
+			variation += aggregate.get_noise_2d(px, py) * 0.025
+			variation += pits.get_noise_2d(px, py) * 0.010
+			var color := Color(
+				clampf(0.17 + variation, 0.0, 1.0),
+				clampf(0.18 + variation, 0.0, 1.0),
+				clampf(0.22 + variation, 0.0, 1.0),
+				1.0
+			)
+			if pits.get_noise_2d(px * 1.3 + 57.0, py * 1.3 - 34.0) > 0.86:
+				color = color.lightened(0.10)
 			image.set_pixel(x, y, color)
+
 	return ImageTexture.create_from_image(image)
 
 
@@ -626,10 +698,10 @@ func _create_bark_texture() -> Texture2D:
 func _build_outdoor_map() -> void:
 	var ground_material := _make_material(Color(0.52, 0.56, 0.49), 0.98)
 	ground_material.albedo_texture = _create_outdoor_ground_texture()
-	ground_material.uv1_scale = Vector3(34.0, 1.0, 42.0)
+	ground_material.uv1_scale = Vector3(1.0, 1.0, 1.0)
 	var path_material := _make_material(Color(0.56, 0.58, 0.62), 0.88)
 	path_material.albedo_texture = _create_asphalt_texture()
-	path_material.uv1_scale = Vector3(5.0, 1.0, 34.0)
+	path_material.uv1_scale = Vector3(1.0, 1.0, 1.0)
 	var curb_material := _make_material(Color(0.48, 0.48, 0.50), 0.76)
 
 	_create_static_box("OuterExplorationGround", Vector3(180.0, 0.5, 210.0), Vector3(0.0, -0.25, 125.0), ground_material)

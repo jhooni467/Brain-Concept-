@@ -510,6 +510,7 @@ func _build_tree_forest() -> void:
 	var trunk_multimesh := MultiMesh.new()
 	trunk_multimesh.transform_format = MultiMesh.TRANSFORM_3D
 	trunk_multimesh.mesh = trunk_mesh
+	trunk_multimesh.custom_aabb = AABB(Vector3(-81.0, 0.0, 41.0), Vector3(162.0, 13.0, 173.0))
 	trunk_multimesh.instance_count = tree_positions.size()
 	for index in range(tree_positions.size()):
 		var tree_position := tree_positions[index]
@@ -544,6 +545,7 @@ func _build_tree_forest() -> void:
 	var canopy_multimesh := MultiMesh.new()
 	canopy_multimesh.transform_format = MultiMesh.TRANSFORM_3D
 	canopy_multimesh.mesh = canopy_mesh
+	canopy_multimesh.custom_aabb = AABB(Vector3(-84.0, 0.0, 38.0), Vector3(168.0, 14.5, 180.0))
 	canopy_multimesh.instance_count = canopy_transforms.size()
 	for index in range(canopy_transforms.size()):
 		canopy_multimesh.set_instance_transform(index, canopy_transforms[index])

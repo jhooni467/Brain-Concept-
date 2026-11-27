@@ -43,6 +43,7 @@ jobs:
       - name: Install Android export requirements
         shell: bash
         run: |
+          set -euo pipefail
           yes | sdkmanager --licenses >/dev/null
           sdkmanager --install \
             "platform-tools" \
@@ -55,6 +56,7 @@ jobs:
       - name: Configure Godot Android SDK paths
         shell: bash
         run: |
+          set -euo pipefail
           mkdir -p "$HOME/.config/godot"
           cat > "$HOME/.config/godot/editor_settings-4.tres" <<EOF
           [gd_resource type="EditorSettings" format=3]
@@ -100,12 +102,25 @@ jobs:
           godot --version
 
       - name: Import and validate project
+        shell: bash
         run: |
-          godot --headless --editor --path . --quit
-          godot --headless --path . --quit-after 5
+          set -euo pipefail
+          godot --headless --editor --path . --quit 2>&1 | tee /tmp/godot-import.log
+          if grep -E "SCRIPT ERROR:|Parse Error:|ERROR:" /tmp/godot-import.log; then
+            echo "Godot reported an import or script error."
+            exit 1
+          fi
+
+          godot --headless --path . --quit-after 5 2>&1 | tee /tmp/godot-smoke.log
+          if grep -E "SCRIPT ERROR:|Parse Error:|ERROR:" /tmp/godot-smoke.log; then
+            echo "Godot reported a runtime error during the smoke test."
+            exit 1
+          fi
 
       - name: Export Android debug APK
+        shell: bash
         run: |
+          set -euo pipefail
           mkdir -p build
           godot --headless --path . --export-debug "Android" build/Concept-of-the-Brain-debug.apk
           test -s build/Concept-of-the-Brain-debug.apk

@@ -61,10 +61,10 @@ func _physics_process(delta: float) -> void:
 func _create_collision() -> void:
 	var collision := CollisionShape3D.new()
 	var capsule := CapsuleShape3D.new()
-	capsule.radius = 0.31
-	capsule.height = 2.05
+	capsule.radius = 0.32
+	capsule.height = 2.68
 	collision.shape = capsule
-	collision.position.y = 1.025
+	collision.position.y = 1.34
 	add_child(collision)
 
 
@@ -74,7 +74,7 @@ func _build_model() -> void:
 	add_child(_visual_root)
 
 	var cloak := _make_material(Color(0.012, 0.011, 0.019), 0.96)
-	var cloak_facet := _make_material(Color(0.027, 0.023, 0.038), 0.92)
+	var cloak_facet := _make_material(Color(0.027, 0.024, 0.039), 0.94)
 	var scarf := _make_material(Color(0.34, 0.012, 0.064), 0.88)
 	var scarf_highlight := _make_material(Color(0.48, 0.025, 0.085), 0.82)
 	var eye_socket := _make_material(Color(0.0015, 0.0015, 0.003), 1.0)
@@ -83,82 +83,103 @@ func _build_model() -> void:
 	eye.emission = Color(1.0, 0.34, 0.055)
 	eye.emission_energy_multiplier = 1.25
 
-	# Axel keeps the reference's distinctive silhouette: oversized cat hood,
-	# tiny dark body, narrow amber eyes and a deep-red scarf.
-	_add_box("ShortCloakBody", Vector3(0.58, 0.68, 0.46), Vector3(0.0, 0.56, 0.02), cloak)
-	_add_box("LeftSleeve", Vector3(0.19, 0.46, 0.25), Vector3(-0.36, 0.59, 0.0), cloak)
-	_add_box("RightSleeve", Vector3(0.19, 0.46, 0.25), Vector3(0.36, 0.59, 0.0), cloak)
-	_add_box("LeftFoot", Vector3(0.23, 0.18, 0.30), Vector3(-0.16, 0.12, 0.035), cloak)
-	_add_box("RightFoot", Vector3(0.23, 0.18, 0.30), Vector3(0.16, 0.12, 0.035), cloak)
+	# Compact cloak body. The head and ears are separate meshes so no concave
+	# polygon fan can fold over itself or produce broken triangles.
+	var body_mesh := MeshInstance3D.new()
+	body_mesh.name = "CloakBody"
+	var body_shape := CylinderMesh.new()
+	body_shape.top_radius = 0.27
+	body_shape.bottom_radius = 0.40
+	body_shape.height = 0.82
+	body_shape.radial_segments = 8
+	body_mesh.mesh = body_shape
+	body_mesh.material_override = cloak
+	body_mesh.position = Vector3(0.0, 0.49, 0.035)
+	_visual_root.add_child(body_mesh)
 
-	var hood := MeshInstance3D.new()
-	hood.name = "AxelSignatureCatHood"
-	hood.mesh = _create_hood_mesh()
-	hood.material_override = cloak
-	_visual_root.add_child(hood)
+	_add_box("LeftSleeve", Vector3(0.19, 0.48, 0.25), Vector3(-0.37, 0.57, 0.01), cloak)
+	_add_box("RightSleeve", Vector3(0.19, 0.48, 0.25), Vector3(0.37, 0.57, 0.01), cloak)
+	_add_box("LeftFoot", Vector3(0.23, 0.18, 0.31), Vector3(-0.16, 0.11, 0.07), cloak)
+	_add_box("RightFoot", Vector3(0.23, 0.18, 0.31), Vector3(0.16, 0.11, 0.07), cloak)
 
-	# Subtle angular planes give the hood depth without changing its silhouette.
-	_add_box("LeftHoodSideFacet", Vector3(0.12, 0.66, 0.58), Vector3(-0.61, 1.63, -0.015), cloak_facet)
-	_add_box("RightHoodSideFacet", Vector3(0.12, 0.66, 0.58), Vector3(0.61, 1.63, -0.015), cloak_facet)
+	# Broad square hood and two independent pointed ears: stable, closed geometry.
+	_add_box("CatHoodHead", Vector3(1.30, 1.12, 0.84), Vector3(0.0, 1.56, 0.0), cloak)
+	_add_ear("LeftPointedEar", Vector3(-0.49, 1.96, 0.0), 0.58, 0.72, 0.78, cloak)
+	_add_ear("RightPointedEar", Vector3(0.49, 1.96, 0.0), 0.58, 0.72, 0.78, cloak)
 
-	# The eyes are deliberately slim and close-set, like the supplied character.
-	_add_box("LeftEyeSocket", Vector3(0.235, 0.145, 0.055), Vector3(-0.205, 1.57, -0.535), eye_socket)
-	_add_box("RightEyeSocket", Vector3(0.235, 0.145, 0.055), Vector3(0.205, 1.57, -0.535), eye_socket)
-	var left_eye := _add_box("LeftAmberEye", Vector3(0.165, 0.085, 0.025), Vector3(-0.205, 1.57, -0.573), eye)
-	var right_eye := _add_box("RightAmberEye", Vector3(0.165, 0.085, 0.025), Vector3(0.205, 1.57, -0.573), eye)
+	# Slightly darker cheek planes give the hood volume while preserving its outline.
+	_add_box("LeftCheekFacet", Vector3(0.12, 0.58, 0.68), Vector3(-0.615, 1.48, -0.01), cloak_facet)
+	_add_box("RightCheekFacet", Vector3(0.12, 0.58, 0.68), Vector3(0.615, 1.48, -0.01), cloak_facet)
+
+	# Eye recesses and amber rectangular eyes are fixed to the front surface.
+	_add_box("LeftEyeSocket", Vector3(0.245, 0.145, 0.045), Vector3(-0.225, 1.55, -0.445), eye_socket)
+	_add_box("RightEyeSocket", Vector3(0.245, 0.145, 0.045), Vector3(0.225, 1.55, -0.445), eye_socket)
+	var left_eye := _add_box("LeftAmberEye", Vector3(0.17, 0.085, 0.026), Vector3(-0.225, 1.55, -0.481), eye)
+	var right_eye := _add_box("RightAmberEye", Vector3(0.17, 0.085, 0.026), Vector3(0.225, 1.55, -0.481), eye)
 	left_eye.rotation.z = deg_to_rad(-3.0)
 	right_eye.rotation.z = deg_to_rad(3.0)
 
-	# Wide scarf covers the lower face; its single front tail hangs over the chest.
-	_add_box("ScarfWrap", Vector3(0.94, 0.235, 0.18), Vector3(0.0, 1.12, -0.56), scarf)
-	_add_box("ScarfUpperFold", Vector3(0.91, 0.045, 0.16), Vector3(0.0, 1.235, -0.66), scarf_highlight)
-	_add_box("ScarfFrontTail", Vector3(0.25, 0.67, 0.15), Vector3(0.0, 0.70, -0.56), scarf)
-	_add_box("ScarfTailFold", Vector3(0.25, 0.075, 0.16), Vector3(0.0, 0.385, -0.66), scarf_highlight)
+	# Scarf wraps around the neck. Its single long end hangs on Axel's right,
+	# rather than running down the center of the face/body.
+	_add_box("ScarfWrap", Vector3(1.12, 0.27, 0.82), Vector3(0.0, 1.08, -0.015), scarf)
+	_add_box("ScarfUpperFold", Vector3(1.00, 0.045, 0.72), Vector3(0.0, 1.225, -0.055), scarf_highlight)
+	var scarf_tail := _add_box(
+		"ScarfRightTail",
+		Vector3(0.24, 0.70, 0.12),
+		Vector3(0.37, 0.66, -0.43),
+		scarf
+	)
+	scarf_tail.rotation.z = deg_to_rad(-3.0)
+	_add_box("ScarfTailFold", Vector3(0.24, 0.07, 0.13), Vector3(0.37, 0.33, -0.445), scarf_highlight)
 
 
-func _create_hood_mesh() -> ArrayMesh:
-	# Extruded angular outline, with tall pointed ears and a broad, squared-off head.
-	var outline: Array[Vector2] = [
-		Vector2(-0.58, -0.49),
-		Vector2(0.58, -0.49),
-		Vector2(0.69, -0.20),
-		Vector2(0.67, 0.31),
-		Vector2(0.61, 0.82),
-		Vector2(0.22, 0.61),
-		Vector2(0.0, 0.43),
-		Vector2(-0.22, 0.61),
-		Vector2(-0.61, 0.82),
-		Vector2(-0.67, 0.31),
-		Vector2(-0.69, -0.20)
-	]
+func _add_ear(
+	mesh_name: String,
+	base_position: Vector3,
+	width: float,
+	height: float,
+	depth: float,
+	material: Material
+) -> void:
+	var ear := MeshInstance3D.new()
+	ear.name = mesh_name
+	ear.mesh = _create_ear_mesh(width, height, depth)
+	ear.material_override = material
+	ear.position = base_position
+	_visual_root.add_child(ear)
+
+
+func _create_ear_mesh(width: float, height: float, depth: float) -> ArrayMesh:
+	var front_left := Vector3(-width * 0.5, 0.0, -depth * 0.5)
+	var front_right := Vector3(width * 0.5, 0.0, -depth * 0.5)
+	var front_tip := Vector3(0.0, height, -depth * 0.34)
+	var back_left := Vector3(-width * 0.5, 0.0, depth * 0.5)
+	var back_right := Vector3(width * 0.5, 0.0, depth * 0.5)
+	var back_tip := Vector3(0.0, height, depth * 0.34)
 
 	var surface := SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var front_points: Array[Vector3] = []
-	var back_points: Array[Vector3] = []
-	for point in outline:
-		front_points.append(Vector3(point.x, point.y + 1.68, -0.49))
-		back_points.append(Vector3(point.x * 0.94, point.y * 0.94 + 1.68, 0.36))
 
-	var front_center := Vector3(0.0, 1.68, -0.49)
-	var back_center := Vector3(0.0, 1.68, 0.36)
-	for index in range(outline.size()):
-		var next_index := (index + 1) % outline.size()
-		surface.add_vertex(front_center)
-		surface.add_vertex(front_points[next_index])
-		surface.add_vertex(front_points[index])
-		surface.add_vertex(back_center)
-		surface.add_vertex(back_points[index])
-		surface.add_vertex(back_points[next_index])
-		surface.add_vertex(front_points[index])
-		surface.add_vertex(front_points[next_index])
-		surface.add_vertex(back_points[next_index])
-		surface.add_vertex(front_points[index])
-		surface.add_vertex(back_points[next_index])
-		surface.add_vertex(back_points[index])
+	# Front and back triangles.
+	_add_triangle(surface, front_left, front_tip, front_right)
+	_add_triangle(surface, back_left, back_right, back_tip)
+
+	# Closed sides prevent the ears from looking like thin, broken sheets.
+	_add_triangle(surface, front_left, back_left, back_tip)
+	_add_triangle(surface, front_left, back_tip, front_tip)
+	_add_triangle(surface, front_right, front_tip, back_tip)
+	_add_triangle(surface, front_right, back_tip, back_right)
+	_add_triangle(surface, front_left, front_right, back_right)
+	_add_triangle(surface, front_left, back_right, back_left)
 
 	surface.generate_normals()
 	return surface.commit()
+
+
+func _add_triangle(surface: SurfaceTool, a: Vector3, b: Vector3, c: Vector3) -> void:
+	surface.add_vertex(a)
+	surface.add_vertex(b)
+	surface.add_vertex(c)
 
 
 func _add_box(

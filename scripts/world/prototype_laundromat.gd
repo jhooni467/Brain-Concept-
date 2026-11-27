@@ -225,11 +225,21 @@ func _build_seating_and_counter() -> void:
 	var frame_material := _make_material(Color(0.1, 0.14, 0.16), 0.55, 0.48)
 	var counter_material := _make_material(Color(0.36, 0.4, 0.41), 0.72)
 
-	# Waiting bench on the left side.
-	_add_box_mesh(self, "BenchSeat", Vector3(4.2, 0.22, 0.72), Vector3(-7.6, 0.78, 5.4), bench_material)
-	_add_box_mesh(self, "BenchBack", Vector3(4.2, 0.85, 0.16), Vector3(-7.6, 1.28, 5.72), bench_material)
-	for leg_x in [-9.2, -6.0]:
-		_add_box_mesh(self, "BenchLeg_%s" % str(leg_x), Vector3(0.16, 0.75, 0.16), Vector3(leg_x, 0.38, 5.4), frame_material)
+	# Waiting bench with a single blocking collision volume.
+	var indoor_bench := StaticBody3D.new()
+	indoor_bench.name = "IndoorWaitingBench"
+	indoor_bench.position = Vector3(-7.6, 0.0, 5.4)
+	add_child(indoor_bench)
+	var bench_collision := CollisionShape3D.new()
+	var bench_shape := BoxShape3D.new()
+	bench_shape.size = Vector3(4.2, 1.45, 0.9)
+	bench_collision.shape = bench_shape
+	bench_collision.position.y = 0.8
+	indoor_bench.add_child(bench_collision)
+	_add_box_mesh(indoor_bench, "BenchSeat", Vector3(4.2, 0.22, 0.72), Vector3(0.0, 0.78, 0.0), bench_material)
+	_add_box_mesh(indoor_bench, "BenchBack", Vector3(4.2, 0.85, 0.16), Vector3(0.0, 1.28, 0.32), bench_material)
+	for leg_x in [-1.6, 1.6]:
+		_add_box_mesh(indoor_bench, "BenchLeg_%s" % str(leg_x), Vector3(0.16, 0.75, 0.16), Vector3(leg_x, 0.38, 0.0), frame_material)
 
 	# Folding counter and a small service desk on the right.
 	_create_static_box("ServiceCounter", Vector3(1.4, 1.05, 5.5), Vector3(9.1, 0.55, 5.3), counter_material)
@@ -337,6 +347,24 @@ func _build_lighting() -> void:
 		_add_box_mesh(self, "CeilingPanelTrim_%d" % index, Vector3(6.42, 0.07, 0.88), Vector3(0.0, 5.25, z_position), _make_material(Color(0.18, 0.21, 0.23), 0.58))
 
 
+func _create_invisible_boundary(
+	boundary_name: String,
+	box_size: Vector3,
+	box_position: Vector3
+) -> StaticBody3D:
+	var body := StaticBody3D.new()
+	body.name = boundary_name
+	body.position = box_position
+	add_child(body)
+
+	var collision := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = box_size
+	collision.shape = shape
+	body.add_child(collision)
+	return body
+
+
 func _create_static_box(
 	box_name: String,
 	box_size: Vector3,
@@ -434,7 +462,6 @@ func _create_wall_texture() -> Texture2D:
 func _build_outdoor_map() -> void:
 	var ground_material := _make_material(Color(0.24, 0.27, 0.29), 0.98)
 	var path_material := _make_material(Color(0.17, 0.19, 0.22), 0.94)
-	var grass_material := _make_material(Color(0.15, 0.2, 0.19), 1.0)
 	var curb_material := _make_material(Color(0.43, 0.45, 0.45), 0.84)
 
 	_create_static_box("OuterExplorationGround", Vector3(180.0, 0.5, 210.0), Vector3(0.0, -0.25, 125.0), ground_material)
@@ -450,10 +477,9 @@ func _build_outdoor_map() -> void:
 	_add_box_mesh(self, "RoadCenterLineE", Vector3(0.16, 0.025, 16.0), Vector3(0.0, 0.09, 154.0), curb_material)
 
 	# Invisible boundary colliders keep the explorable area contained.
-	_create_static_box("WorldBoundaryWest", Vector3(0.6, 8.0, 210.0), Vector3(-90.0, 4.0, 125.0), grass_material)
-	_create_static_box("WorldBoundaryEast", Vector3(0.6, 8.0, 210.0), Vector3(90.0, 4.0, 125.0), grass_material)
-	_create_static_box("WorldBoundaryNorth", Vector3(180.0, 8.0, 0.6), Vector3(0.0, 4.0, 20.0), grass_material)
-	_create_static_box("WorldBoundarySouth", Vector3(180.0, 8.0, 0.6), Vector3(0.0, 4.0, 230.0), grass_material)
+	_create_invisible_boundary("WorldBoundaryWest", Vector3(0.6, 8.0, 210.0), Vector3(-90.0, 4.0, 125.0))
+	_create_invisible_boundary("WorldBoundaryEast", Vector3(0.6, 8.0, 210.0), Vector3(90.0, 4.0, 125.0))
+	_create_invisible_boundary("WorldBoundarySouth", Vector3(180.0, 8.0, 0.6), Vector3(0.0, 4.0, 230.0))
 
 
 func _build_tree_forest() -> void:

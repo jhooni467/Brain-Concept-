@@ -2,9 +2,13 @@ extends Control
 
 signal look_dragged(delta: Vector2)
 
-const JOYSTICK_RADIUS: float = 78.0
+const JOYSTICK_RADIUS: float = 104.0
 const JOYSTICK_OPACITY: float = 0.10
-const CAMERA_TOUCH_LEFT_BOUNDARY: float = 0.44
+const CAMERA_TOUCH_LEFT_BOUNDARY: float = 0.42
+
+const JUMP_BUTTON_RADIUS: float = 62.0
+const JUMP_BUTTON_CENTER_X: float = 0.875
+const JUMP_BUTTON_CENTER_Y: float = 0.78
 
 var _move_touch_id: int = -1
 var _jump_touch_id: int = -1
@@ -90,20 +94,20 @@ func consume_jump() -> bool:
 
 
 func _is_move_zone(position: Vector2) -> bool:
-	return position.x < size.x * 0.45 and position.y > size.y * 0.46
+	return position.x < size.x * 0.43 and position.y > size.y * 0.43
 
 
 func _is_jump_zone(position: Vector2) -> bool:
-	return position.x > size.x * 0.76 and position.y > size.y * 0.64
+	var jump_center := Vector2(size.x * JUMP_BUTTON_CENTER_X, size.y * JUMP_BUTTON_CENTER_Y)
+	return position.distance_to(jump_center) <= JUMP_BUTTON_RADIUS * 1.45
 
 
 func _is_camera_zone(position: Vector2) -> bool:
-	return position.x > size.x * CAMERA_TOUCH_LEFT_BOUNDARY and position.y < size.y * 0.9
+	return position.x > size.x * CAMERA_TOUCH_LEFT_BOUNDARY and position.y < size.y * 0.91
 
 
 func _update_movement(position: Vector2) -> void:
 	var offset := position - _stick_origin
-
 	if offset.length() > JOYSTICK_RADIUS:
 		offset = offset.normalized() * JOYSTICK_RADIUS
 
@@ -122,14 +126,14 @@ func _draw() -> void:
 	var joystick_outline := Color(0.9, 0.92, 0.98, JOYSTICK_OPACITY)
 
 	draw_circle(joystick_center, JOYSTICK_RADIUS, joystick_fill)
-	draw_arc(joystick_center, JOYSTICK_RADIUS, 0.0, TAU, 48, joystick_outline, 2.0)
-	draw_circle(joystick_center + stick_offset, 31.0, joystick_fill)
-	draw_arc(joystick_center + stick_offset, 31.0, 0.0, TAU, 32, joystick_outline, 1.5)
+	draw_arc(joystick_center, JOYSTICK_RADIUS, 0.0, TAU, 48, joystick_outline, 2.5)
+	draw_circle(joystick_center + stick_offset, 42.0, joystick_fill)
+	draw_arc(joystick_center + stick_offset, 42.0, 0.0, TAU, 32, joystick_outline, 1.8)
 
-	var jump_center := Vector2(size.x * 0.88, size.y * 0.79)
-	var jump_color := Color(0.48, 0.18, 0.28, 0.3) if _jump_touch_id != -1 else Color(0.78, 0.76, 0.82, 0.18)
-	draw_circle(jump_center, 49.0, jump_color)
-	draw_arc(jump_center, 49.0, 0.0, TAU, 40, Color(0.9, 0.88, 0.94, 0.24), 2.0)
-	draw_line(jump_center + Vector2(0.0, 12.0), jump_center + Vector2(0.0, -12.0), Color(1.0, 0.98, 1.0, 0.82), 4.0)
-	draw_line(jump_center + Vector2(-10.0, -2.0), jump_center + Vector2(0.0, -13.0), Color(1.0, 0.98, 1.0, 0.82), 4.0)
-	draw_line(jump_center + Vector2(10.0, -2.0), jump_center + Vector2(0.0, -13.0), Color(1.0, 0.98, 1.0, 0.82), 4.0)
+	var jump_center := Vector2(size.x * JUMP_BUTTON_CENTER_X, size.y * JUMP_BUTTON_CENTER_Y)
+	var jump_color := Color(0.48, 0.18, 0.28, 0.34) if _jump_touch_id != -1 else Color(0.78, 0.76, 0.82, 0.2)
+	draw_circle(jump_center, JUMP_BUTTON_RADIUS, jump_color)
+	draw_arc(jump_center, JUMP_BUTTON_RADIUS, 0.0, TAU, 48, Color(0.9, 0.88, 0.94, 0.28), 2.5)
+	draw_line(jump_center + Vector2(0.0, 16.0), jump_center + Vector2(0.0, -16.0), Color(1.0, 0.98, 1.0, 0.86), 5.0)
+	draw_line(jump_center + Vector2(-13.0, -2.0), jump_center + Vector2(0.0, -17.0), Color(1.0, 0.98, 1.0, 0.86), 5.0)
+	draw_line(jump_center + Vector2(13.0, -2.0), jump_center + Vector2(0.0, -17.0), Color(1.0, 0.98, 1.0, 0.86), 5.0)

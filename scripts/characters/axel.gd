@@ -110,10 +110,10 @@ func _build_model() -> void:
 	right_eye.rotation.z = deg_to_rad(3.0)
 
 	# Wide scarf covers the lower face; its single front tail hangs over the chest.
-	_add_box("ScarfWrap", Vector3(0.94, 0.235, 0.72), Vector3(0.0, 1.12, -0.055), scarf)
-	_add_box("ScarfUpperFold", Vector3(0.91, 0.045, 0.70), Vector3(0.0, 1.235, -0.065), scarf_highlight)
-	_add_box("ScarfFrontTail", Vector3(0.25, 0.67, 0.15), Vector3(0.0, 0.70, -0.39), scarf)
-	_add_box("ScarfTailFold", Vector3(0.25, 0.075, 0.16), Vector3(0.0, 0.385, -0.395), scarf_highlight)
+	_add_box("ScarfWrap", Vector3(0.94, 0.235, 0.18), Vector3(0.0, 1.12, -0.56), scarf)
+	_add_box("ScarfUpperFold", Vector3(0.91, 0.045, 0.16), Vector3(0.0, 1.235, -0.66), scarf_highlight)
+	_add_box("ScarfFrontTail", Vector3(0.25, 0.67, 0.15), Vector3(0.0, 0.70, -0.56), scarf)
+	_add_box("ScarfTailFold", Vector3(0.25, 0.075, 0.16), Vector3(0.0, 0.385, -0.66), scarf_highlight)
 
 
 func _create_hood_mesh() -> ArrayMesh:

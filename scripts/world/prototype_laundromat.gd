@@ -390,14 +390,15 @@ func _build_liminal_details() -> void:
 		_add_box_mesh(lamp, "LampArm", Vector3(1.25, 0.10, 0.10), Vector3(0.52, 7.55, 0.0), pole_material)
 		_add_box_mesh(lamp, "LampHousing", Vector3(0.68, 0.16, 0.42), Vector3(1.04, 7.48, 0.0), pole_material)
 		_add_box_mesh(lamp, "LampLens", Vector3(0.54, 0.035, 0.30), Vector3(1.04, 7.38, 0.0), lamp_material)
-		var light := OmniLight3D.new()
-		light.name = "LampPool_%02d" % index
-		light.position = Vector3(1.04, 7.15, 0.0)
-		light.light_color = Color(0.43, 0.52, 1.0)
-		light.light_energy = 0.48
-		light.omni_range = 11.0
-		light.shadow_enabled = false
-		lamp.add_child(light)
+		if index % 2 == 0:
+			var light := OmniLight3D.new()
+			light.name = "LampPool_%02d" % index
+			light.position = Vector3(1.04, 7.15, 0.0)
+			light.light_color = Color(0.43, 0.52, 1.0)
+			light.light_energy = 0.48
+			light.omni_range = 11.0
+			light.shadow_enabled = false
+			lamp.add_child(light)
 
 	var fence_material := _make_material(Color(0.19, 0.22, 0.25), 0.78, 0.18)
 	for side in [-1.0, 1.0]:
@@ -442,7 +443,7 @@ func _build_liminal_details() -> void:
 		lettering.pixel_size = 0.004
 		lettering.modulate = Color(0.78, 0.82, 1.0, 0.88)
 		lettering.position = Vector3(0.0, 2.53, -0.15)
-		lettering.rotation.y = PI
+		lettering.rotation.y = 0.0
 		sign.add_child(lettering)
 
 

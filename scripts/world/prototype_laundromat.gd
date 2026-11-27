@@ -411,7 +411,7 @@ func _build_liminal_details() -> void:
 				Vector3(side * 15.0, 0.62, z_position),
 				fence_material
 			)
-			post.cast_shadow = false
+			post.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		_add_box_mesh(
 			self,
 			"FenceRail_%s" % str(side),

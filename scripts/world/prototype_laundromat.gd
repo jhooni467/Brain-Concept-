@@ -738,10 +738,10 @@ func _build_crt_pool() -> void:
 
 
 func _build_purple_signal() -> void:
-	var signal := StaticBody3D.new()
-	signal.name = "PurpleSignalPole"
-	signal.position = Vector3(14.0, 0.0, 128.0)
-	add_child(signal)
+	var signal_body := StaticBody3D.new()
+	signal_body.name = "PurpleSignalPole"
+	signal_body.position = Vector3(14.0, 0.0, 128.0)
+	add_child(signal_body)
 
 	var pole_shape := CylinderShape3D.new()
 	pole_shape.radius = 0.42
@@ -749,7 +749,7 @@ func _build_purple_signal() -> void:
 	var pole_collision := CollisionShape3D.new()
 	pole_collision.shape = pole_shape
 	pole_collision.position.y = 2.9
-	signal.add_child(pole_collision)
+	signal_body.add_child(pole_collision)
 
 	var pole_mesh := CylinderMesh.new()
 	pole_mesh.top_radius = 0.28
@@ -760,13 +760,13 @@ func _build_purple_signal() -> void:
 	pole_visual.mesh = pole_mesh
 	pole_visual.material_override = _make_material(Color(0.64, 0.48, 0.22), 0.7, 0.16)
 	pole_visual.position.y = 2.9
-	signal.add_child(pole_visual)
+	signal_body.add_child(pole_visual)
 
 	var housing_material := _make_material(Color(0.23, 0.19, 0.29), 0.64, 0.22)
 	var purple_material := _make_emission_material(Color(0.4, 0.13, 0.72), Color(0.56, 0.14, 0.95), 1.8)
 	for index in range(3):
 		var y_position := 4.65 - float(index) * 1.25
-		_add_box_mesh(signal, "SignalHousing_%d" % index, Vector3(1.1, 1.0, 0.62), Vector3(0.0, y_position, -0.35), housing_material)
+		_add_box_mesh(signal_body, "SignalHousing_%d" % index, Vector3(1.1, 1.0, 0.62), Vector3(0.0, y_position, -0.35), housing_material)
 		var lens := MeshInstance3D.new()
 		lens.name = "PurpleLens_%d" % index
 		var sphere := SphereMesh.new()
@@ -777,7 +777,7 @@ func _build_purple_signal() -> void:
 		lens.mesh = sphere
 		lens.material_override = purple_material
 		lens.position = Vector3(0.0, y_position, -0.72)
-		signal.add_child(lens)
+		signal_body.add_child(lens)
 
 
 func _build_palm_tree() -> void:

@@ -20,6 +20,7 @@ window/handheld/orientation=0
 
 renderer/rendering_method="mobile"
 renderer/rendering_method.mobile="mobile"
+textures/vram_compression/import_etc2_astc=true
 environment/defaults/default_clear_color=Color(0.012, 0.01, 0.018, 1)
 
 [physics]

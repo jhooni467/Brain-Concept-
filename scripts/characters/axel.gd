@@ -29,8 +29,8 @@ func _physics_process(delta: float) -> void:
 	var touch_vector := Vector2.ZERO
 	var touch_jump := false
 	if is_instance_valid(_mobile_controls):
-		touch_vector = _mobile_controls.get_movement_vector()
-		touch_jump = _mobile_controls.consume_jump()
+		touch_vector = _mobile_controls.call("get_movement_vector")
+		touch_jump = bool(_mobile_controls.call("consume_jump"))
 
 	var input_vector := touch_vector if touch_vector.length() > 0.05 else keyboard_vector
 	var camera_forward := Vector3.FORWARD.rotated(Vector3.UP, camera_yaw)

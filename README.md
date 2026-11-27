@@ -12,7 +12,7 @@ Videojuego 3D de exploración para Android en orientación horizontal. Proyecto 
 ## Estado actual — Etapa 2 en desarrollo
 
 La versión en desarrollo incluye:
-- Axel rediseñado como un gato encapuchado Low Poly, con ojos ámbar y bufanda roja, siguiendo la silueta de la referencia proporcionada.
+- Axel rediseñado con cabeza de capucha en caja cerrada y dos orejas triangulares independientes, ojos ámbar, cuerpo corto y cola de bufanda desplazada al lado derecho. La geometría de las orejas se construye como prismas cerrados para evitar triangulación de polígonos cóncavos.
 - Movimiento en tercera persona relativo a la cámara.
 - Cámara orbital táctil: arrastrar desde el lado derecho para mirar a izquierda, derecha, arriba y abajo.
 - Joystick de movimiento con opacidad visual del 10%, mayor radio y zona táctil ampliada.
@@ -22,6 +22,7 @@ La versión en desarrollo incluye:
 - Lavandería inicial conectada a una zona exterior amplia.
 - Zona exterior con caminos, bosque low-poly, banca, caseta de control, barrera, ATM en una formación rocosa, piscina con monitores CRT, señal morada y palmera.
 - Optimización inicial: árboles repetidos mediante MultiMesh, menos luces dinámicas y glow desactivado para reducir trabajo de renderizado en Android.
+- Texturas de suelo, paredes, terreno y asfalto con ruido de varias escalas y coordenadas de textura ajustadas para evitar mosaicos y líneas repetitivas visibles.
 - Renderizador Mobile, orientación horizontal y exportación Android ARM64.
 - GitHub Actions valida los scripts y escenas, ejecuta una prueba rápida y genera un APK de depuración.
 

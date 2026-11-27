@@ -6,13 +6,15 @@ const TOUCH_CONTROLS_SCENE: PackedScene = preload("res://scenes/ui/touch_control
 
 const CAMERA_DISTANCE: float = 6.4
 const CAMERA_DRAG_SENSITIVITY: float = 0.0045
-const CAMERA_MIN_PITCH: float = deg_to_rad(-8.0)
-const CAMERA_MAX_PITCH: float = deg_to_rad(58.0)
+const CAMERA_MIN_PITCH: float = deg_to_rad(-10.0)
+const CAMERA_MAX_PITCH: float = deg_to_rad(64.0)
 
 var player: CharacterBody3D
 var follow_camera: Camera3D
-var camera_yaw: float = 0.0
-var camera_pitch: float = deg_to_rad(19.0)
+var fps_label: Label
+var camera_yaw: float = PI
+var camera_pitch: float = deg_to_rad(18.0)
+var _fps_update_timer: float = 0.0
 
 
 func _ready() -> void:
@@ -22,21 +24,28 @@ func _ready() -> void:
 	var world := WORLD_SCENE.instantiate()
 	add_child(world)
 
+	_create_touch_hud()
+
 	player = AXEL_SCENE.instantiate() as CharacterBody3D
-	player.position = Vector3(0.0, 0.0, 8.0)
+	player.position = Vector3(0.0, 0.0, 8.5)
+	player.set("camera_yaw", camera_yaw)
 	add_child(player)
 
 	_create_camera()
-	_create_touch_hud()
 
 
 func _process(delta: float) -> void:
+	_update_camera(delta)
+	_update_fps_counter(delta)
+
+
+func _update_camera(delta: float) -> void:
 	if not is_instance_valid(player) or not is_instance_valid(follow_camera):
 		return
 
 	player.set("camera_yaw", camera_yaw)
 
-	var focus_point := player.global_position + Vector3(0.0, 1.35, 0.0)
+	var focus_point := player.global_position + Vector3(0.0, 1.12, 0.0)
 	var camera_offset := Vector3(
 		0.0,
 		sin(camera_pitch) * CAMERA_DISTANCE,
@@ -54,15 +63,16 @@ func _create_camera() -> void:
 	follow_camera.name = "OrbitCamera"
 	follow_camera.fov = 66.0
 	follow_camera.near = 0.05
-	follow_camera.far = 90.0
+	follow_camera.far = 220.0
 	add_child(follow_camera)
 
-	var focus_point := player.global_position + Vector3(0.0, 1.35, 0.0)
+	var focus_point := player.global_position + Vector3(0.0, 1.12, 0.0)
 	var camera_offset := Vector3(
 		0.0,
 		sin(camera_pitch) * CAMERA_DISTANCE,
 		cos(camera_pitch) * CAMERA_DISTANCE
-	)
+	).rotated(Vector3.UP, camera_yaw)
+
 	follow_camera.global_position = focus_point + camera_offset
 	follow_camera.look_at(focus_point, Vector3.UP)
 	follow_camera.current = true
@@ -76,7 +86,29 @@ func _create_touch_hud() -> void:
 
 	var touch_controls := TOUCH_CONTROLS_SCENE.instantiate()
 	ui_layer.add_child(touch_controls)
-	touch_controls.connect("look_dragged", _on_camera_dragged)
+	touch_controls.look_dragged.connect(_on_camera_dragged)
+
+	fps_label = Label.new()
+	fps_label.name = "FPSCounter"
+	fps_label.text = "FPS --"
+	fps_label.position = Vector2(22.0, 14.0)
+	fps_label.modulate = Color(1.0, 1.0, 1.0, 0.9)
+	fps_label.add_theme_color_override("font_color", Color(0.94, 0.95, 1.0, 1.0))
+	fps_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.75))
+	fps_label.add_theme_constant_override("shadow_offset_x", 1)
+	fps_label.add_theme_constant_override("shadow_offset_y", 2)
+	fps_label.add_theme_font_size_override("font_size", 23)
+	ui_layer.add_child(fps_label)
+
+
+func _update_fps_counter(delta: float) -> void:
+	_fps_update_timer += delta
+	if _fps_update_timer < 0.25:
+		return
+
+	_fps_update_timer = 0.0
+	if is_instance_valid(fps_label):
+		fps_label.text = "FPS %d" % Engine.get_frames_per_second()
 
 
 func _on_camera_dragged(delta: Vector2) -> void:

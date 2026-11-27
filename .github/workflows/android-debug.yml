@@ -133,6 +133,15 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+
+  package-source:
+    name: Package complete Godot source
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
       - name: Upload complete Godot project source
         uses: actions/upload-artifact@v7
         with:

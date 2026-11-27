@@ -132,3 +132,19 @@ jobs:
           path: build/Concept-of-the-Brain-debug.apk
           if-no-files-found: error
           retention-days: 14
+
+      - name: Upload complete Godot project source
+        uses: actions/upload-artifact@v7
+        with:
+          name: Brain-Concept-main-source
+          path: |
+            .github/
+            .gitignore
+            README.md
+            export_presets.cfg
+            project.godot
+            scenes/
+            scripts/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14

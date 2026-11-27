@@ -22,23 +22,32 @@ func _ready() -> void:
 	_build_crt_pool()
 	_build_purple_signal()
 	_build_palm_tree()
+	_build_liminal_details()
 	_build_lighting()
 
 
 func _setup_environment() -> void:
 	var world_environment := WorldEnvironment.new()
 	var environment := Environment.new()
-	environment.background_mode = Environment.BG_COLOR
-	environment.background_color = Color(0.035, 0.043, 0.06)
+	var sky := Sky.new()
+	var sky_material := ProceduralSkyMaterial.new()
+	sky_material.sky_top_color = Color(0.035, 0.045, 0.085)
+	sky_material.sky_horizon_color = Color(0.24, 0.20, 0.31)
+	sky_material.ground_bottom_color = Color(0.018, 0.024, 0.035)
+	sky_material.ground_horizon_color = Color(0.12, 0.13, 0.19)
+	sky_material.energy_multiplier = 0.72
+	sky.sky_material = sky_material
+	environment.background_mode = Environment.BG_SKY
+	environment.sky = sky
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	environment.ambient_light_color = Color(0.78, 0.82, 0.9)
-	environment.ambient_light_energy = 0.88
+	environment.ambient_light_color = Color(0.48, 0.50, 0.67)
+	environment.ambient_light_energy = 0.68
 	environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	environment.tonemap_exposure = 1.18
+	environment.tonemap_exposure = 0.92
 	environment.fog_enabled = true
-	environment.fog_light_color = Color(0.22, 0.26, 0.34)
-	environment.fog_density = 0.0019
-	# Glow is disabled for a steadier frame rate on Android; emissive colors remain visible.
+	environment.fog_light_color = Color(0.19, 0.16, 0.27)
+	environment.fog_density = 0.0032
+	# Restrained emissive accents keep the liminal mood without a costly full-screen glow pass.
 	environment.glow_enabled = false
 	world_environment.environment = environment
 	add_child(world_environment)
@@ -318,10 +327,10 @@ func _build_vending_machine() -> void:
 
 func _build_lighting() -> void:
 	var directional := DirectionalLight3D.new()
-	directional.name = "WorldAmbientLight"
-	directional.rotation_degrees = Vector3(-54.0, -28.0, 0.0)
-	directional.light_color = Color(0.72, 0.78, 0.9)
-	directional.light_energy = 0.72
+	directional.name = "CoolMoonlight"
+	directional.rotation_degrees = Vector3(-42.0, -28.0, 0.0)
+	directional.light_color = Color(0.62, 0.66, 0.92)
+	directional.light_energy = 0.82
 	directional.shadow_enabled = false
 	add_child(directional)
 
@@ -330,8 +339,8 @@ func _build_lighting() -> void:
 	interior_light.name = "LaundryCeilingFill"
 	interior_light.position = Vector3(0.0, 4.4, -3.2)
 	interior_light.light_color = Color(0.78, 0.88, 0.94)
-	interior_light.light_energy = 1.6
-	interior_light.omni_range = 25.0
+	interior_light.light_energy = 1.12
+	interior_light.omni_range = 23.0
 	interior_light.shadow_enabled = false
 	add_child(interior_light)
 
@@ -345,6 +354,96 @@ func _build_lighting() -> void:
 		var z_position: float = panel_positions[index]
 		_add_box_mesh(self, "CeilingPanel_%d" % index, Vector3(6.2, 0.045, 0.72), Vector3(0.0, 5.21, z_position), panel_material)
 		_add_box_mesh(self, "CeilingPanelTrim_%d" % index, Vector3(6.42, 0.07, 0.88), Vector3(0.0, 5.25, z_position), _make_material(Color(0.18, 0.21, 0.23), 0.58))
+
+
+func _build_liminal_details() -> void:
+	var pole_material := _make_material(Color(0.105, 0.12, 0.15), 0.62, 0.32)
+	var lamp_material := _make_emission_material(Color(0.78, 0.82, 0.96), Color(0.36, 0.48, 1.0), 1.35)
+	var lamp_positions: Array[Vector3] = [
+		Vector3(-8.0, 0.0, 58.0),
+		Vector3(8.0, 0.0, 116.0),
+		Vector3(-18.0, 0.0, 166.0),
+		Vector3(20.0, 0.0, 190.0)
+	]
+	for index in range(lamp_positions.size()):
+		var lamp := StaticBody3D.new()
+		lamp.name = "RoadLamp_%02d" % index
+		lamp.position = lamp_positions[index]
+		add_child(lamp)
+		var pole_shape := CylinderShape3D.new()
+		pole_shape.radius = 0.13
+		pole_shape.height = 7.8
+		var pole_collision := CollisionShape3D.new()
+		pole_collision.shape = pole_shape
+		pole_collision.position.y = 3.9
+		lamp.add_child(pole_collision)
+		var pole_mesh := CylinderMesh.new()
+		pole_mesh.top_radius = 0.09
+		pole_mesh.bottom_radius = 0.15
+		pole_mesh.height = 7.8
+		pole_mesh.radial_segments = 12
+		var pole_visual := MeshInstance3D.new()
+		pole_visual.mesh = pole_mesh
+		pole_visual.material_override = pole_material
+		pole_visual.position.y = 3.9
+		lamp.add_child(pole_visual)
+		_add_box_mesh(lamp, "LampArm", Vector3(1.25, 0.10, 0.10), Vector3(0.52, 7.55, 0.0), pole_material)
+		_add_box_mesh(lamp, "LampHousing", Vector3(0.68, 0.16, 0.42), Vector3(1.04, 7.48, 0.0), pole_material)
+		_add_box_mesh(lamp, "LampLens", Vector3(0.54, 0.035, 0.30), Vector3(1.04, 7.38, 0.0), lamp_material)
+		var light := OmniLight3D.new()
+		light.name = "LampPool_%02d" % index
+		light.position = Vector3(1.04, 7.15, 0.0)
+		light.light_color = Color(0.43, 0.52, 1.0)
+		light.light_energy = 0.48
+		light.omni_range = 11.0
+		light.shadow_enabled = false
+		lamp.add_child(light)
+
+	var fence_material := _make_material(Color(0.19, 0.22, 0.25), 0.78, 0.18)
+	for side in [-1.0, 1.0]:
+		for index in range(13):
+			var z_position := 48.0 + float(index) * 5.2
+			var post := _add_box_mesh(
+				self,
+				"FencePost_%s_%02d" % [str(side), index],
+				Vector3(0.12, 1.25, 0.12),
+				Vector3(side * 15.0, 0.62, z_position),
+				fence_material
+			)
+			post.cast_shadow = false
+		_add_box_mesh(
+			self,
+			"FenceRail_%s" % str(side),
+			Vector3(0.10, 0.10, 67.0),
+			Vector3(side * 15.0, 0.92, 79.0),
+			fence_material
+		)
+
+	var sign_frame := _make_material(Color(0.12, 0.14, 0.19), 0.48, 0.25)
+	var sign_face := _make_emission_material(Color(0.18, 0.23, 0.31), Color(0.08, 0.12, 0.22), 0.32)
+	for index in range(3):
+		var sign := StaticBody3D.new()
+		sign.name = "RepeatedRoadSign_%02d" % index
+		sign.position = Vector3(11.8, 0.0, 72.0 + float(index) * 34.0)
+		add_child(sign)
+		var post_shape := BoxShape3D.new()
+		post_shape.size = Vector3(0.12, 2.8, 0.12)
+		var post_collision := CollisionShape3D.new()
+		post_collision.shape = post_shape
+		post_collision.position.y = 1.4
+		sign.add_child(post_collision)
+		_add_box_mesh(sign, "SignPost", Vector3(0.12, 2.8, 0.12), Vector3(0.0, 1.4, 0.0), pole_material)
+		_add_box_mesh(sign, "SignBorder", Vector3(1.8, 0.9, 0.12), Vector3(0.0, 2.55, -0.04), sign_frame)
+		_add_box_mesh(sign, "SignFace", Vector3(1.62, 0.72, 0.035), Vector3(0.0, 2.55, -0.115), sign_face)
+		var lettering := Label3D.new()
+		lettering.name = "RepeatedText"
+		lettering.text = "STAY HERE"
+		lettering.font_size = 32
+		lettering.pixel_size = 0.004
+		lettering.modulate = Color(0.78, 0.82, 1.0, 0.88)
+		lettering.position = Vector3(0.0, 2.53, -0.15)
+		lettering.rotation.y = PI
+		sign.add_child(lettering)
 
 
 func _create_invisible_boundary(
@@ -433,36 +532,104 @@ func steel_material() -> StandardMaterial3D:
 
 
 func _create_floor_texture() -> Texture2D:
-	var image := Image.create(128, 128, false, Image.FORMAT_RGBA8)
-	for y in range(128):
-		for x in range(128):
-			var tile_x := floori(float(x) / 32.0)
-			var tile_y := floori(float(y) / 32.0)
-			var variation := float((tile_x * 7 + tile_y * 11) % 5) * 0.012
-			var color := Color(0.56 + variation, 0.62 + variation, 0.64 + variation, 1.0)
-			if x % 32 < 2 or y % 32 < 2:
-				color = Color(0.31, 0.39, 0.42, 1.0)
-			elif (x + y * 3) % 29 == 0:
-				color = color.darkened(0.035)
+	var image := Image.create(256, 256, false, Image.FORMAT_RGBA8)
+	var noise := FastNoiseLite.new()
+	noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	noise.frequency = 0.045
+	for y in range(256):
+		for x in range(256):
+			var tile_x := x % 64
+			var tile_y := y % 64
+			var grain := noise.get_noise_2d(float(x), float(y)) * 0.035
+			var color := Color(0.53 + grain, 0.58 + grain, 0.60 + grain, 1.0)
+			if tile_x < 2 or tile_y < 2:
+				color = Color(0.20, 0.26, 0.29, 1.0)
+			elif tile_x > 60 or tile_y > 60:
+				color = color.darkened(0.045)
+			elif (x * 13 + y * 7) % 173 == 0:
+				color = color.darkened(0.10)
 			image.set_pixel(x, y, color)
 	return ImageTexture.create_from_image(image)
 
 
 func _create_wall_texture() -> Texture2D:
-	var image := Image.create(64, 64, false, Image.FORMAT_RGBA8)
-	for y in range(64):
-		for x in range(64):
-			var variation := float((x * 5 + y * 3) % 9) * 0.003
-			var color := Color(0.68 + variation, 0.7 + variation, 0.7 + variation, 1.0)
-			if y % 32 == 0:
-				color = Color(0.55, 0.58, 0.59, 1.0)
+	var image := Image.create(256, 256, false, Image.FORMAT_RGBA8)
+	var noise := FastNoiseLite.new()
+	noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	noise.frequency = 0.035
+	for y in range(256):
+		for x in range(256):
+			var grain := noise.get_noise_2d(float(x), float(y)) * 0.045
+			var color := Color(0.60 + grain, 0.63 + grain, 0.67 + grain, 1.0)
+			if y % 85 < 2:
+				color = Color(0.34, 0.39, 0.45, 1.0)
+			elif x % 128 < 2:
+				color = color.darkened(0.055)
+			elif y > 220 and (x + y) % 17 < 2:
+				color = color.darkened(0.07)
 			image.set_pixel(x, y, color)
 	return ImageTexture.create_from_image(image)
 
+
+func _create_outdoor_ground_texture() -> Texture2D:
+	var image := Image.create(256, 256, false, Image.FORMAT_RGBA8)
+	var broad_noise := FastNoiseLite.new()
+	broad_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	broad_noise.frequency = 0.018
+	var fine_noise := FastNoiseLite.new()
+	fine_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	fine_noise.frequency = 0.11
+	for y in range(256):
+		for x in range(256):
+			var broad := broad_noise.get_noise_2d(float(x), float(y)) * 0.12
+			var fine := fine_noise.get_noise_2d(float(x), float(y)) * 0.035
+			var value := broad + fine
+			var color := Color(0.27 + value, 0.31 + value, 0.27 + value * 0.8, 1.0)
+			if (x * 17 + y * 29) % 211 < 3:
+				color = color.darkened(0.24)
+			elif (x * 7 + y * 11) % 97 < 2:
+				color = color.lightened(0.09)
+			image.set_pixel(x, y, color)
+	return ImageTexture.create_from_image(image)
+
+
+func _create_asphalt_texture() -> Texture2D:
+	var image := Image.create(256, 256, false, Image.FORMAT_RGBA8)
+	var noise := FastNoiseLite.new()
+	noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	noise.frequency = 0.12
+	for y in range(256):
+		for x in range(256):
+			var grain := noise.get_noise_2d(float(x), float(y)) * 0.065
+			var color := Color(0.19 + grain, 0.20 + grain, 0.24 + grain, 1.0)
+			if (x * 19 + y * 31) % 487 < 2:
+				color = color.darkened(0.38)
+			image.set_pixel(x, y, color)
+	return ImageTexture.create_from_image(image)
+
+
+func _create_bark_texture() -> Texture2D:
+	var image := Image.create(128, 256, false, Image.FORMAT_RGBA8)
+	var noise := FastNoiseLite.new()
+	noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	noise.frequency = 0.055
+	for y in range(256):
+		for x in range(128):
+			var grain := noise.get_noise_2d(float(x) * 0.7, float(y)) * 0.055
+			var streak := sin(float(x) * 0.17 + noise.get_noise_2d(float(x), float(y)) * 2.0) * 0.025
+			var value := grain + streak
+			image.set_pixel(x, y, Color(0.29 + value, 0.21 + value, 0.17 + value, 1.0))
+	return ImageTexture.create_from_image(image)
+
+
 func _build_outdoor_map() -> void:
-	var ground_material := _make_material(Color(0.24, 0.27, 0.29), 0.98)
-	var path_material := _make_material(Color(0.17, 0.19, 0.22), 0.94)
-	var curb_material := _make_material(Color(0.43, 0.45, 0.45), 0.84)
+	var ground_material := _make_material(Color(0.52, 0.56, 0.49), 0.98)
+	ground_material.albedo_texture = _create_outdoor_ground_texture()
+	ground_material.uv1_scale = Vector3(34.0, 1.0, 42.0)
+	var path_material := _make_material(Color(0.56, 0.58, 0.62), 0.88)
+	path_material.albedo_texture = _create_asphalt_texture()
+	path_material.uv1_scale = Vector3(5.0, 1.0, 34.0)
+	var curb_material := _make_material(Color(0.48, 0.48, 0.50), 0.76)
 
 	_create_static_box("OuterExplorationGround", Vector3(180.0, 0.5, 210.0), Vector3(0.0, -0.25, 125.0), ground_material)
 	_add_box_mesh(self, "MainAsphaltRoad", Vector3(10.0, 0.07, 184.0), Vector3(0.0, 0.035, 122.0), path_material)
@@ -505,7 +672,7 @@ func _build_tree_forest() -> void:
 	trunk_mesh.top_radius = 0.22
 	trunk_mesh.bottom_radius = 0.48
 	trunk_mesh.height = 1.0
-	trunk_mesh.radial_segments = 5
+	trunk_mesh.radial_segments = 12
 
 	var trunk_multimesh := MultiMesh.new()
 	trunk_multimesh.transform_format = MultiMesh.TRANSFORM_3D
@@ -522,14 +689,16 @@ func _build_tree_forest() -> void:
 		trunk_multimesh.set_instance_transform(index, transform)
 
 	var trunk_visual := MultiMeshInstance3D.new()
-	trunk_visual.name = "LowPolyTreeTrunks"
+	trunk_visual.name = "DetailedTreeTrunks"
 	trunk_visual.multimesh = trunk_multimesh
-	trunk_visual.material_override = _make_material(Color(0.19, 0.15, 0.14), 0.96)
+	var bark_material := _make_material(Color(0.34, 0.27, 0.23), 0.96)
+	bark_material.albedo_texture = _create_bark_texture()
+	trunk_visual.material_override = bark_material
 	add_child(trunk_visual)
 
 	var canopy_mesh := SphereMesh.new()
-	canopy_mesh.radial_segments = 5
-	canopy_mesh.rings = 3
+	canopy_mesh.radial_segments = 14
+	canopy_mesh.rings = 8
 	canopy_mesh.radius = 1.0
 	canopy_mesh.height = 2.0
 
@@ -551,9 +720,9 @@ func _build_tree_forest() -> void:
 		canopy_multimesh.set_instance_transform(index, canopy_transforms[index])
 
 	var canopy_visual := MultiMeshInstance3D.new()
-	canopy_visual.name = "LowPolyTreeCanopies"
+	canopy_visual.name = "DetailedTreeCanopies"
 	canopy_visual.multimesh = canopy_multimesh
-	canopy_visual.material_override = _make_material(Color(0.07, 0.12, 0.105), 0.98)
+	canopy_visual.material_override = _make_material(Color(0.075, 0.13, 0.105), 0.94)
 	add_child(canopy_visual)
 
 
@@ -694,8 +863,8 @@ func _add_low_poly_rock(
 	var rock := MeshInstance3D.new()
 	rock.name = rock_name
 	var sphere := SphereMesh.new()
-	sphere.radial_segments = 5
-	sphere.rings = 3
+	sphere.radial_segments = 14
+	sphere.rings = 8
 	sphere.radius = 1.0
 	sphere.height = 2.0
 	rock.mesh = sphere
@@ -709,7 +878,9 @@ func _build_crt_pool() -> void:
 	var pool_position := Vector3(-49.0, 0.0, 146.0)
 	var pool_base_material := _make_material(Color(0.13, 0.22, 0.25), 0.9)
 	var pool_tile_material := _make_material(Color(0.11, 0.35, 0.4), 0.62)
-	var water_material := _make_material(Color(0.025, 0.13, 0.18), 0.18, 0.12)
+	var water_material := _make_material(Color(0.018, 0.095, 0.14), 0.13, 0.22)
+	water_material.clearcoat_enabled = true
+	water_material.clearcoat = 0.48
 
 	_create_static_box("CRTDisplayPoolBase", Vector3(27.0, 0.5, 21.0), pool_position + Vector3(0.0, -0.25, 0.0), pool_base_material)
 	_create_static_box("PoolRimNorth", Vector3(27.0, 0.72, 0.55), pool_position + Vector3(0.0, 0.36, -10.2), pool_tile_material)

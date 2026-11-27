@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: godot-android-stage1-${{ github.ref }}
+  group: godot-android-stage2-${{ github.ref }}-${{ github.sha }}
   cancel-in-progress: true
 
 env:

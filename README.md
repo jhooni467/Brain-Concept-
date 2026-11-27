@@ -1,40 +1,47 @@
 # Concept of the Brain
 
-Videojuego 3D para Android en orientación horizontal. Proyecto desarrollado con **Godot 4.7.2 estable** y **GDScript**.
+Videojuego 3D de exploración para Android en orientación horizontal. Proyecto desarrollado con **Godot 4.7.2 estable** y **GDScript**.
 
 ## Dirección visual
 
 - Personajes 3D Low Poly.
-- Entornos 3D modelados con estética retro inspirada en PS1/PS2.
+- Entornos 3D con estética retro inspirada en PS1/PS2.
 - Atmósferas liminales, Dreamcore, Weirdcore y Backrooms.
-- Los primeros escenarios sirven como prototipos visuales y de jugabilidad; se podrán reemplazar y mejorar en etapas posteriores.
+- El escenario inicial es un mundo provisional explorable que se ampliará y recibirá más detalle durante las siguientes iteraciones.
 
-## Estado actual — Prototipo 0.1.0
+## Estado actual — Etapa 2 en desarrollo
 
-La base técnica incluye:
-- Proyecto 3D con renderizador Mobile y orientación horizontal.
-- Axel como personaje inicial controlable. El modelo actual es un blockout geométrico Low Poly provisional; todavía no es un modelo final ni una réplica exacta de la referencia.
-- Movimiento en tercera persona relativo a la orientación de la cámara.
-- Cámara orbital: arrastre en la zona derecha de la pantalla para mirar a los lados y arriba/abajo.
-- Joystick táctil de movimiento con opacidad visual del 10% y botón de salto.
-- Controles de teclado y arrastre con botón derecho para pruebas en escritorio.
-- Escenario provisional de lavandería con entrada, pasillo, ventanas, máquinas, zona de espera, mostrador, fregadero, cestos, máquina expendedora y luces de techo.
-- Materiales y texturas procedurales sencillas para el suelo y las paredes, más iluminación ambiental y paneles luminosos.
-- Flujo de GitHub Actions que valida el proyecto y genera un APK de depuración.
+La versión en desarrollo incluye:
+- Axel rediseñado como un gato encapuchado Low Poly, con ojos ámbar y bufanda roja, siguiendo la silueta de la referencia proporcionada.
+- Movimiento en tercera persona relativo a la cámara.
+- Cámara orbital táctil: arrastrar desde el lado derecho para mirar a izquierda, derecha, arriba y abajo.
+- Joystick de movimiento con opacidad visual del 10%, mayor radio y zona táctil ampliada.
+- Botón de salto aumentado para facilitar el uso en teléfonos.
+- Contador de FPS sencillo en la esquina superior izquierda, con 90% de opacidad.
+- Colisiones físicas del personaje con suelo, paredes, máquinas, árboles, mobiliario, caseta, barrera, rocas, piscina y objetos de escenario relevantes.
+- Lavandería inicial conectada a una zona exterior amplia.
+- Zona exterior con caminos, bosque low-poly, banca, caseta de control, barrera, ATM en una formación rocosa, piscina con monitores CRT, señal morada y palmera.
+- Optimización inicial: árboles repetidos mediante MultiMesh, menos luces dinámicas y glow desactivado para reducir trabajo de renderizado en Android.
+- Renderizador Mobile, orientación horizontal y exportación Android ARM64.
+- GitHub Actions valida los scripts y escenas, ejecuta una prueba rápida y genera un APK de depuración.
 
-El escenario de lavandería es un espacio de pruebas; no fija la historia, las misiones ni el diseño final de los mundos.
+La escena sigue siendo un prototipo. El contador de FPS ayuda a medir el rendimiento, pero el rendimiento real debe comprobarse en el teléfono; una compilación correcta no garantiza una tasa de cuadros determinada.
 
 ## Controles
 
 ### Android
 - Joystick: zona inferior izquierda.
-- Cámara: arrastrar desde la mitad derecha de la pantalla, evitando el botón de salto.
-- Saltar: botón de la esquina inferior derecha.
+- Cámara: arrastrar desde el lado derecho de la pantalla.
+- Saltar: botón grande de la esquina inferior derecha.
 
 ### Teclado y ratón
 - WASD o flechas: moverse.
 - Espacio: saltar.
 - Mantener el botón derecho del ratón y arrastrar: mover la cámara.
+
+## Colisiones
+
+El personaje es un `CharacterBody3D` con cápsula de colisión. Su movimiento se resuelve con `move_and_slide()`. Los objetos sólidos usan cuerpos estáticos y formas de colisión; los elementos decorativos ligeros pueden no tener colisión.
 
 ## Abrir el proyecto
 
@@ -51,10 +58,10 @@ GitHub Actions valida la apertura del proyecto, realiza una prueba rápida de ej
 
 ## Hoja de ruta
 
-- **Etapa 1 — Prototipo jugable:** cámara, controles, iluminación inicial y primer escenario completo provisional.
-- **Etapa 2 — Pulido visual:** sustituir blockouts, elevar la calidad de modelos, materiales, texturas, iluminación y efectos, manteniendo un rendimiento adecuado en Android.
-- **Etapa 3 — Gameplay:** definir exploración libre, objetivos, interacciones y actividades.
-- **Etapas posteriores:** ampliar mundos, sistemas, audio, optimización y lanzamiento.
+- **Etapa 1 — Fundación técnica y primer escenario provisional:** completada.
+- **Etapa 2 — Renovación visual, físicas, controles, rendimiento y expansión del mundo:** en desarrollo.
+- **Etapa 3 — Gameplay:** definir y ampliar exploración libre, objetivos, interacciones y actividades.
+- **Etapas posteriores:** más mundos, sistemas, audio, optimización final y lanzamiento.
 
 ## Estructura
 

@@ -93,7 +93,7 @@ func _create_touch_hud() -> void:
 	fps_label.name = "FPSCounter"
 	fps_label.text = "FPS --"
 	fps_label.position = Vector2(22.0, 14.0)
-	fps_label.modulate = Color(1.0, 1.0, 1.0, 0.9)
+	fps_label.modulate = Color(1.0, 1.0, 1.0, 0.10)
 	fps_label.add_theme_color_override("font_color", Color(0.94, 0.95, 1.0, 1.0))
 	fps_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.75))
 	fps_label.add_theme_constant_override("shadow_offset_x", 1)

@@ -62,9 +62,9 @@ func _create_collision() -> void:
 	var collision := CollisionShape3D.new()
 	var capsule := CapsuleShape3D.new()
 	capsule.radius = 0.32
-	capsule.height = 2.28
+	capsule.height = 2.68
 	collision.shape = capsule
-	collision.position.y = 1.14
+	collision.position.y = 1.34
 	add_child(collision)
 
 

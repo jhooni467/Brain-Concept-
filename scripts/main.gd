@@ -28,6 +28,7 @@ func _ready() -> void:
 
 	player = AXEL_SCENE.instantiate() as CharacterBody3D
 	player.position = Vector3(0.0, 0.0, 8.5)
+	player.rotation.y = camera_yaw
 	player.set("camera_yaw", camera_yaw)
 	add_child(player)
 
@@ -86,7 +87,7 @@ func _create_touch_hud() -> void:
 
 	var touch_controls := TOUCH_CONTROLS_SCENE.instantiate()
 	ui_layer.add_child(touch_controls)
-	touch_controls.look_dragged.connect(_on_camera_dragged)
+	touch_controls.connect("look_dragged", Callable(self, "_on_camera_dragged"))
 
 	fps_label = Label.new()
 	fps_label.name = "FPSCounter"

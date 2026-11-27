@@ -20,9 +20,7 @@ func _ready() -> void:
 	add_child(player)
 
 	_create_camera()
-
-	var touch_controls := TOUCH_CONTROLS_SCENE.instantiate()
-	add_child(touch_controls)
+	_create_touch_hud()
 
 
 func _process(delta: float) -> void:
@@ -45,6 +43,16 @@ func _create_camera() -> void:
 	follow_camera.global_position = player.global_position + Vector3(0.0, 2.9, 6.0)
 	follow_camera.look_at(player.global_position + Vector3(0.0, 1.25, 0.0), Vector3.UP)
 	follow_camera.current = true
+
+
+func _create_touch_hud() -> void:
+	var ui_layer := CanvasLayer.new()
+	ui_layer.name = "HUDLayer"
+	ui_layer.layer = 10
+	add_child(ui_layer)
+
+	var touch_controls := TOUCH_CONTROLS_SCENE.instantiate()
+	ui_layer.add_child(touch_controls)
 
 
 func _configure_input() -> void:

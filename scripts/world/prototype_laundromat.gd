@@ -14,6 +14,14 @@ func _ready() -> void:
 	_build_seating_and_counter()
 	_build_laundry_baskets()
 	_build_vending_machine()
+	_build_outdoor_map()
+	_build_tree_forest()
+	_build_waiting_bench()
+	_build_guard_gate()
+	_build_rockside_atm()
+	_build_crt_pool()
+	_build_purple_signal()
+	_build_palm_tree()
 	_build_lighting()
 
 
@@ -21,18 +29,17 @@ func _setup_environment() -> void:
 	var world_environment := WorldEnvironment.new()
 	var environment := Environment.new()
 	environment.background_mode = Environment.BG_COLOR
-	environment.background_color = Color(0.045, 0.052, 0.065)
+	environment.background_color = Color(0.035, 0.043, 0.06)
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	environment.ambient_light_color = Color(0.72, 0.78, 0.86)
-	environment.ambient_light_energy = 0.92
+	environment.ambient_light_color = Color(0.78, 0.82, 0.9)
+	environment.ambient_light_energy = 0.88
 	environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	environment.tonemap_exposure = 1.12
+	environment.tonemap_exposure = 1.18
 	environment.fog_enabled = true
-	environment.fog_light_color = Color(0.24, 0.29, 0.35)
-	environment.fog_density = 0.0025
-	environment.glow_enabled = true
-	environment.glow_intensity = 0.32
-	environment.glow_bloom = 0.08
+	environment.fog_light_color = Color(0.22, 0.26, 0.34)
+	environment.fog_density = 0.0019
+	# Glow is disabled for a steadier frame rate on Android; emissive colors remain visible.
+	environment.glow_enabled = false
 	world_environment.environment = environment
 	add_child(world_environment)
 
@@ -127,7 +134,7 @@ func _build_corridor(wall_material: Material, floor_material: Material, trim_mat
 	_create_static_box("EntryWalkway", Vector3(6.0, 0.3, 7.0), Vector3(0.0, -0.16, 21.5), floor_material)
 	_create_static_box("EntrySideLeft", Vector3(0.25, 4.7, 7.0), Vector3(-3.0, 2.2, 21.5), wall_material)
 	_create_static_box("EntrySideRight", Vector3(0.25, 4.7, 7.0), Vector3(3.0, 2.2, 21.5), wall_material)
-	_create_static_box("EntryEndWall", Vector3(6.0, 4.7, 0.25), Vector3(0.0, 2.2, 25.0), wall_material)
+	# The corridor stays open at its far end so the player can reach the outside map.
 	_add_box_mesh(self, "EntryBaseTrimLeft", Vector3(0.12, 0.15, 7.0), Vector3(-2.82, 0.12, 21.5), trim_material)
 	_add_box_mesh(self, "EntryBaseTrimRight", Vector3(0.12, 0.15, 7.0), Vector3(2.82, 0.12, 21.5), trim_material)
 
@@ -301,35 +308,33 @@ func _build_vending_machine() -> void:
 
 func _build_lighting() -> void:
 	var directional := DirectionalLight3D.new()
-	directional.name = "SoftInteriorFill"
-	directional.rotation_degrees = Vector3(-58.0, -25.0, 0.0)
-	directional.light_color = Color(0.76, 0.82, 0.9)
-	directional.light_energy = 0.58
+	directional.name = "WorldAmbientLight"
+	directional.rotation_degrees = Vector3(-54.0, -28.0, 0.0)
+	directional.light_color = Color(0.72, 0.78, 0.9)
+	directional.light_energy = 0.72
 	directional.shadow_enabled = false
 	add_child(directional)
 
-	var light_positions: Array[float] = [-10.5, -2.8, 5.0, 12.5]
-	for index in range(light_positions.size()):
-		_create_fluorescent_light(index, light_positions[index])
+	# One broad interior fill replaces four overlapping real-time lights.
+	var interior_light := OmniLight3D.new()
+	interior_light.name = "LaundryCeilingFill"
+	interior_light.position = Vector3(0.0, 4.4, -3.2)
+	interior_light.light_color = Color(0.78, 0.88, 0.94)
+	interior_light.light_energy = 1.6
+	interior_light.omni_range = 25.0
+	interior_light.shadow_enabled = false
+	add_child(interior_light)
 
-
-func _create_fluorescent_light(index: int, z_position: float) -> void:
 	var panel_material := _make_emission_material(
 		Color(0.78, 0.88, 0.9),
-		Color(0.55, 0.72, 0.78),
-		0.95
+		Color(0.48, 0.66, 0.72),
+		0.72
 	)
-	_add_box_mesh(self, "CeilingPanel_%d" % index, Vector3(6.2, 0.045, 0.72), Vector3(0.0, 5.21, z_position), panel_material)
-	_add_box_mesh(self, "CeilingPanelTrim_%d" % index, Vector3(6.42, 0.07, 0.88), Vector3(0.0, 5.25, z_position), _make_material(Color(0.18, 0.21, 0.23), 0.58))
-
-	var light := OmniLight3D.new()
-	light.name = "CeilingLight_%d" % index
-	light.position = Vector3(0.0, 4.65, z_position)
-	light.light_color = Color(0.77, 0.88, 0.92)
-	light.light_energy = 2.35
-	light.omni_range = 13.5
-	light.shadow_enabled = false
-	add_child(light)
+	var panel_positions: Array[float] = [-10.5, -3.0, 4.5, 12.0]
+	for index in range(panel_positions.size()):
+		var z_position: float = panel_positions[index]
+		_add_box_mesh(self, "CeilingPanel_%d" % index, Vector3(6.2, 0.045, 0.72), Vector3(0.0, 5.21, z_position), panel_material)
+		_add_box_mesh(self, "CeilingPanelTrim_%d" % index, Vector3(6.42, 0.07, 0.88), Vector3(0.0, 5.25, z_position), _make_material(Color(0.18, 0.21, 0.23), 0.58))
 
 
 func _create_static_box(
@@ -425,3 +430,378 @@ func _create_wall_texture() -> Texture2D:
 				color = Color(0.55, 0.58, 0.59, 1.0)
 			image.set_pixel(x, y, color)
 	return ImageTexture.create_from_image(image)
+
+func _build_outdoor_map() -> void:
+	var ground_material := _make_material(Color(0.24, 0.27, 0.29), 0.98)
+	var path_material := _make_material(Color(0.17, 0.19, 0.22), 0.94)
+	var grass_material := _make_material(Color(0.15, 0.2, 0.19), 1.0)
+	var curb_material := _make_material(Color(0.43, 0.45, 0.45), 0.84)
+
+	_create_static_box("OuterExplorationGround", Vector3(180.0, 0.5, 210.0), Vector3(0.0, -0.25, 125.0), ground_material)
+	_add_box_mesh(self, "MainAsphaltRoad", Vector3(10.0, 0.07, 184.0), Vector3(0.0, 0.035, 122.0), path_material)
+	_add_box_mesh(self, "WestTrail", Vector3(6.5, 0.07, 48.0), Vector3(-27.0, 0.04, 144.0), path_material)
+	_add_box_mesh(self, "EastTrail", Vector3(6.5, 0.07, 44.0), Vector3(29.0, 0.04, 133.0), path_material)
+	_add_box_mesh(self, "SouthPlaza", Vector3(35.0, 0.08, 18.0), Vector3(0.0, 0.05, 80.0), path_material)
+
+	_add_box_mesh(self, "RoadCenterLineA", Vector3(0.16, 0.025, 16.0), Vector3(0.0, 0.09, 48.0), curb_material)
+	_add_box_mesh(self, "RoadCenterLineB", Vector3(0.16, 0.025, 16.0), Vector3(0.0, 0.09, 69.0), curb_material)
+	_add_box_mesh(self, "RoadCenterLineC", Vector3(0.16, 0.025, 16.0), Vector3(0.0, 0.09, 112.0), curb_material)
+	_add_box_mesh(self, "RoadCenterLineD", Vector3(0.16, 0.025, 16.0), Vector3(0.0, 0.09, 133.0), curb_material)
+	_add_box_mesh(self, "RoadCenterLineE", Vector3(0.16, 0.025, 16.0), Vector3(0.0, 0.09, 154.0), curb_material)
+
+	# Invisible boundary colliders keep the explorable area contained.
+	_create_static_box("WorldBoundaryWest", Vector3(0.6, 8.0, 210.0), Vector3(-90.0, 4.0, 125.0), grass_material)
+	_create_static_box("WorldBoundaryEast", Vector3(0.6, 8.0, 210.0), Vector3(90.0, 4.0, 125.0), grass_material)
+	_create_static_box("WorldBoundaryNorth", Vector3(180.0, 8.0, 0.6), Vector3(0.0, 4.0, 20.0), grass_material)
+	_create_static_box("WorldBoundarySouth", Vector3(180.0, 8.0, 0.6), Vector3(0.0, 4.0, 230.0), grass_material)
+
+
+func _build_tree_forest() -> void:
+	var tree_positions: Array[Vector3] = [
+		Vector3(-24.0, 0.0, 43.0), Vector3(25.0, 0.0, 45.0),
+		Vector3(-39.0, 0.0, 57.0), Vector3(39.0, 0.0, 62.0),
+		Vector3(-29.0, 0.0, 91.0), Vector3(31.0, 0.0, 92.0),
+		Vector3(-65.0, 0.0, 78.0), Vector3(-75.0, 0.0, 105.0),
+		Vector3(-66.0, 0.0, 133.0), Vector3(-79.0, 0.0, 166.0),
+		Vector3(-58.0, 0.0, 185.0), Vector3(-31.0, 0.0, 188.0),
+		Vector3(65.0, 0.0, 76.0), Vector3(77.0, 0.0, 104.0),
+		Vector3(69.0, 0.0, 137.0), Vector3(78.0, 0.0, 171.0),
+		Vector3(30.0, 0.0, 188.0), Vector3(-4.0, 0.0, 201.0),
+		Vector3(53.0, 0.0, 202.0), Vector3(-50.0, 0.0, 211.0)
+	]
+	var tree_heights: Array[float] = []
+	for index in range(tree_positions.size()):
+		var height := 8.0 + float(index % 4) * 1.3
+		tree_heights.append(height)
+		_create_tree_collider("TreeTrunkCollider_%02d" % index, tree_positions[index], height)
+
+	var trunk_mesh := CylinderMesh.new()
+	trunk_mesh.top_radius = 0.22
+	trunk_mesh.bottom_radius = 0.48
+	trunk_mesh.height = 1.0
+	trunk_mesh.radial_segments = 5
+
+	var trunk_multimesh := MultiMesh.new()
+	trunk_multimesh.transform_format = MultiMesh.TRANSFORM_3D
+	trunk_multimesh.mesh = trunk_mesh
+	trunk_multimesh.instance_count = tree_positions.size()
+	for index in range(tree_positions.size()):
+		var tree_position := tree_positions[index]
+		var height := tree_heights[index]
+		var transform := Transform3D(
+			Basis().scaled(Vector3(1.0, height, 1.0)),
+			tree_position + Vector3(0.0, height * 0.5, 0.0)
+		)
+		trunk_multimesh.set_instance_transform(index, transform)
+
+	var trunk_visual := MultiMeshInstance3D.new()
+	trunk_visual.name = "LowPolyTreeTrunks"
+	trunk_visual.multimesh = trunk_multimesh
+	trunk_visual.material_override = _make_material(Color(0.19, 0.15, 0.14), 0.96)
+	add_child(trunk_visual)
+
+	var canopy_mesh := SphereMesh.new()
+	canopy_mesh.radial_segments = 5
+	canopy_mesh.rings = 3
+	canopy_mesh.radius = 1.0
+	canopy_mesh.height = 2.0
+
+	var canopy_transforms: Array[Transform3D] = []
+	for index in range(tree_positions.size()):
+		var tree_position := tree_positions[index]
+		var height := tree_heights[index]
+		var canopy_center := tree_position + Vector3(0.0, height * 0.79, 0.0)
+		canopy_transforms.append(Transform3D(Basis().scaled(Vector3(2.8, 2.5, 2.8)), canopy_center))
+		canopy_transforms.append(Transform3D(Basis().scaled(Vector3(2.0, 1.8, 2.0)), canopy_center + Vector3(-1.25, -0.5, 0.3)))
+		canopy_transforms.append(Transform3D(Basis().scaled(Vector3(2.0, 1.8, 2.0)), canopy_center + Vector3(1.25, -0.45, -0.25)))
+
+	var canopy_multimesh := MultiMesh.new()
+	canopy_multimesh.transform_format = MultiMesh.TRANSFORM_3D
+	canopy_multimesh.mesh = canopy_mesh
+	canopy_multimesh.instance_count = canopy_transforms.size()
+	for index in range(canopy_transforms.size()):
+		canopy_multimesh.set_instance_transform(index, canopy_transforms[index])
+
+	var canopy_visual := MultiMeshInstance3D.new()
+	canopy_visual.name = "LowPolyTreeCanopies"
+	canopy_visual.multimesh = canopy_multimesh
+	canopy_visual.material_override = _make_material(Color(0.07, 0.12, 0.105), 0.98)
+	add_child(canopy_visual)
+
+
+func _create_tree_collider(tree_name: String, tree_position: Vector3, height: float) -> void:
+	var tree_body := StaticBody3D.new()
+	tree_body.name = tree_name
+	tree_body.position = tree_position
+	add_child(tree_body)
+
+	var collision := CollisionShape3D.new()
+	var trunk_shape := CylinderShape3D.new()
+	trunk_shape.radius = 0.48
+	trunk_shape.height = height
+	collision.shape = trunk_shape
+	collision.position.y = height * 0.5
+	tree_body.add_child(collision)
+
+
+func _build_waiting_bench() -> void:
+	var bench := StaticBody3D.new()
+	bench.name = "ForestBench"
+	bench.position = Vector3(-36.0, 0.0, 81.0)
+	add_child(bench)
+
+	var collision := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = Vector3(3.6, 0.72, 0.92)
+	collision.shape = shape
+	collision.position.y = 0.7
+	bench.add_child(collision)
+
+	var green_metal := _make_material(Color(0.12, 0.24, 0.2), 0.62, 0.42)
+	var seat_wood := _make_material(Color(0.28, 0.23, 0.18), 0.88)
+	_add_box_mesh(bench, "BenchSeat", Vector3(3.5, 0.18, 0.82), Vector3(0.0, 0.72, 0.0), seat_wood)
+	_add_box_mesh(bench, "BenchBack", Vector3(3.5, 0.88, 0.15), Vector3(0.0, 1.2, -0.34), seat_wood)
+	_add_box_mesh(bench, "BenchSupportLeft", Vector3(0.18, 0.82, 0.18), Vector3(-1.42, 0.42, 0.0), green_metal)
+	_add_box_mesh(bench, "BenchSupportRight", Vector3(0.18, 0.82, 0.18), Vector3(1.42, 0.42, 0.0), green_metal)
+
+
+func _build_guard_gate() -> void:
+	var booth := StaticBody3D.new()
+	booth.name = "ForestCheckpointBooth"
+	booth.position = Vector3(-11.0, 0.0, 92.0)
+	add_child(booth)
+
+	var booth_collision := CollisionShape3D.new()
+	var booth_shape := BoxShape3D.new()
+	booth_shape.size = Vector3(4.4, 3.6, 3.8)
+	booth_collision.shape = booth_shape
+	booth_collision.position.y = 1.8
+	booth.add_child(booth_collision)
+
+	var booth_material := _make_material(Color(0.34, 0.3, 0.25), 0.92)
+	var window_material := _make_material(Color(0.12, 0.19, 0.22), 0.18, 0.18)
+	_add_box_mesh(booth, "BoothBody", Vector3(4.3, 3.5, 3.7), Vector3(0.0, 1.8, 0.0), booth_material)
+	_add_box_mesh(booth, "BoothFrontWindow", Vector3(3.3, 1.25, 0.07), Vector3(0.0, 2.45, -1.89), window_material)
+	_add_box_mesh(booth, "BoothRoof", Vector3(4.8, 0.26, 4.2), Vector3(0.0, 3.68, 0.0), _make_material(Color(0.18, 0.21, 0.22), 0.7))
+	_add_box_mesh(booth, "StopSignBoard", Vector3(2.2, 0.58, 0.14), Vector3(0.0, 3.2, -1.98), _make_emission_material(Color(0.72, 0.035, 0.045), Color(0.4, 0.008, 0.012), 0.65))
+
+	var barrier_post := StaticBody3D.new()
+	barrier_post.name = "BarrierPost"
+	barrier_post.position = Vector3(-4.4, 0.0, 92.0)
+	add_child(barrier_post)
+	var post_collision := CollisionShape3D.new()
+	var post_shape := CylinderShape3D.new()
+	post_shape.radius = 0.34
+	post_shape.height = 1.8
+	post_collision.shape = post_shape
+	post_collision.position.y = 0.9
+	barrier_post.add_child(post_collision)
+	var post_mesh := CylinderMesh.new()
+	post_mesh.top_radius = 0.3
+	post_mesh.bottom_radius = 0.38
+	post_mesh.height = 1.8
+	post_mesh.radial_segments = 8
+	var post_visual := MeshInstance3D.new()
+	post_visual.mesh = post_mesh
+	post_visual.material_override = _make_material(Color(0.78, 0.7, 0.48), 0.72, 0.12)
+	post_visual.position.y = 0.9
+	barrier_post.add_child(post_visual)
+
+	var barrier := StaticBody3D.new()
+	barrier.name = "CheckpointBarrierArm"
+	barrier.position = Vector3(-1.6, 1.35, 92.0)
+	barrier.rotation.y = deg_to_rad(-7.0)
+	add_child(barrier)
+	var arm_collision := CollisionShape3D.new()
+	var arm_shape := BoxShape3D.new()
+	arm_shape.size = Vector3(5.4, 0.22, 0.22)
+	arm_collision.shape = arm_shape
+	barrier.add_child(arm_collision)
+	_add_box_mesh(barrier, "BarrierArm", Vector3(5.4, 0.22, 0.22), Vector3.ZERO, _make_material(Color(0.84, 0.76, 0.58), 0.58))
+	_add_box_mesh(barrier, "BarrierRedStripeA", Vector3(0.42, 0.24, 0.24), Vector3(-1.6, 0.0, 0.0), _make_material(Color(0.62, 0.07, 0.055), 0.56))
+	_add_box_mesh(barrier, "BarrierRedStripeB", Vector3(0.42, 0.24, 0.24), Vector3(0.2, 0.0, 0.0), _make_material(Color(0.62, 0.07, 0.055), 0.56))
+
+
+func _build_rockside_atm() -> void:
+	var rock_material := _make_material(Color(0.25, 0.28, 0.29), 0.98)
+	var dark_rock := _make_material(Color(0.14, 0.17, 0.18), 0.98)
+	var rock_wall := _create_static_box(
+		"RockWallCollider",
+		Vector3(12.0, 7.0, 4.0),
+		Vector3(55.0, 3.5, 124.0),
+		dark_rock
+	)
+	_add_low_poly_rock(rock_wall, "RockTopLeft", Vector3(-4.5, 3.0, 0.0), Vector3(3.6, 3.0, 3.0), rock_material)
+	_add_low_poly_rock(rock_wall, "RockTopRight", Vector3(4.3, 2.6, -0.2), Vector3(3.8, 2.6, 3.1), rock_material)
+	_add_low_poly_rock(rock_wall, "RockSideLeft", Vector3(-5.0, 0.3, -0.4), Vector3(2.6, 2.8, 2.8), rock_material)
+	_add_low_poly_rock(rock_wall, "RockSideRight", Vector3(5.0, 0.1, -0.3), Vector3(2.6, 2.9, 2.8), rock_material)
+
+	var atm := StaticBody3D.new()
+	atm.name = "GreenRocksideATM"
+	atm.position = Vector3(47.5, 0.0, 120.8)
+	add_child(atm)
+
+	var atm_collision := CollisionShape3D.new()
+	var atm_shape := BoxShape3D.new()
+	atm_shape.size = Vector3(1.8, 2.7, 0.78)
+	atm_collision.shape = atm_shape
+	atm_collision.position.y = 1.35
+	atm.add_child(atm_collision)
+
+	var machine_material := _make_material(Color(0.16, 0.2, 0.2), 0.48, 0.25)
+	var screen_material := _make_emission_material(Color(0.22, 0.68, 0.48), Color(0.12, 0.7, 0.44), 1.15)
+	_add_box_mesh(atm, "ATMBody", Vector3(1.8, 2.7, 0.72), Vector3(0.0, 1.35, 0.0), machine_material)
+	_add_box_mesh(atm, "ATMScreen", Vector3(1.16, 0.82, 0.07), Vector3(0.0, 1.8, -0.4), screen_material)
+	_add_box_mesh(atm, "ATMKeypad", Vector3(0.52, 0.4, 0.08), Vector3(0.0, 0.92, -0.41), _make_material(Color(0.06, 0.09, 0.09), 0.54))
+	_add_box_mesh(atm, "ATMCashSlot", Vector3(0.62, 0.12, 0.08), Vector3(0.0, 0.48, -0.41), _make_material(Color(0.02, 0.025, 0.025), 0.4, 0.3))
+
+
+func _add_low_poly_rock(
+	parent: Node3D,
+	rock_name: String,
+	local_position: Vector3,
+	rock_scale: Vector3,
+	material: Material
+) -> void:
+	var rock := MeshInstance3D.new()
+	rock.name = rock_name
+	var sphere := SphereMesh.new()
+	sphere.radial_segments = 5
+	sphere.rings = 3
+	sphere.radius = 1.0
+	sphere.height = 2.0
+	rock.mesh = sphere
+	rock.material_override = material
+	rock.position = local_position
+	rock.scale = rock_scale
+	parent.add_child(rock)
+
+
+func _build_crt_pool() -> void:
+	var pool_position := Vector3(-49.0, 0.0, 146.0)
+	var pool_base_material := _make_material(Color(0.13, 0.22, 0.25), 0.9)
+	var pool_tile_material := _make_material(Color(0.11, 0.35, 0.4), 0.62)
+	var water_material := _make_material(Color(0.025, 0.13, 0.18), 0.18, 0.12)
+
+	_create_static_box("CRTDisplayPoolBase", Vector3(27.0, 0.5, 21.0), pool_position + Vector3(0.0, -0.25, 0.0), pool_base_material)
+	_create_static_box("PoolRimNorth", Vector3(27.0, 0.72, 0.55), pool_position + Vector3(0.0, 0.36, -10.2), pool_tile_material)
+	_create_static_box("PoolRimSouth", Vector3(27.0, 0.72, 0.55), pool_position + Vector3(0.0, 0.36, 10.2), pool_tile_material)
+	_create_static_box("PoolRimWest", Vector3(0.55, 0.72, 20.0), pool_position + Vector3(-13.2, 0.36, 0.0), pool_tile_material)
+	_create_static_box("PoolRimEast", Vector3(0.55, 0.72, 20.0), pool_position + Vector3(13.2, 0.36, 0.0), pool_tile_material)
+	_add_box_mesh(self, "PoolWater", Vector3(25.8, 0.06, 19.8), pool_position + Vector3(0.0, 0.04, 0.0), water_material)
+
+	var monitor_body_material := _make_material(Color(0.12, 0.14, 0.16), 0.58)
+	var screen_material := _make_emission_material(Color(0.34, 0.48, 0.5), Color(0.3, 0.56, 0.6), 0.48)
+	for row in range(2):
+		for column in range(5):
+			var monitor_position := pool_position + Vector3(-8.8 + float(column) * 4.4, 0.0, -3.8 + float(row) * 7.6)
+			var monitor := StaticBody3D.new()
+			monitor.name = "PoolCRT_%d_%d" % [row, column]
+			monitor.position = monitor_position
+			add_child(monitor)
+
+			var monitor_collision := CollisionShape3D.new()
+			var monitor_shape := BoxShape3D.new()
+			monitor_shape.size = Vector3(1.7, 1.35, 1.0)
+			monitor_collision.shape = monitor_shape
+			monitor_collision.position.y = 0.82
+			monitor.add_child(monitor_collision)
+
+			_add_box_mesh(monitor, "CRTBody", Vector3(1.72, 1.32, 0.98), Vector3(0.0, 0.82, 0.0), monitor_body_material)
+			_add_box_mesh(monitor, "CRTGlass", Vector3(1.34, 0.91, 0.055), Vector3(0.0, 0.86, -0.51), screen_material)
+
+
+func _build_purple_signal() -> void:
+	var signal := StaticBody3D.new()
+	signal.name = "PurpleSignalPole"
+	signal.position = Vector3(14.0, 0.0, 128.0)
+	add_child(signal)
+
+	var pole_shape := CylinderShape3D.new()
+	pole_shape.radius = 0.42
+	pole_shape.height = 5.8
+	var pole_collision := CollisionShape3D.new()
+	pole_collision.shape = pole_shape
+	pole_collision.position.y = 2.9
+	signal.add_child(pole_collision)
+
+	var pole_mesh := CylinderMesh.new()
+	pole_mesh.top_radius = 0.28
+	pole_mesh.bottom_radius = 0.42
+	pole_mesh.height = 5.8
+	pole_mesh.radial_segments = 6
+	var pole_visual := MeshInstance3D.new()
+	pole_visual.mesh = pole_mesh
+	pole_visual.material_override = _make_material(Color(0.64, 0.48, 0.22), 0.7, 0.16)
+	pole_visual.position.y = 2.9
+	signal.add_child(pole_visual)
+
+	var housing_material := _make_material(Color(0.23, 0.19, 0.29), 0.64, 0.22)
+	var purple_material := _make_emission_material(Color(0.4, 0.13, 0.72), Color(0.56, 0.14, 0.95), 1.8)
+	for index in range(3):
+		var y_position := 4.65 - float(index) * 1.25
+		_add_box_mesh(signal, "SignalHousing_%d" % index, Vector3(1.1, 1.0, 0.62), Vector3(0.0, y_position, -0.35), housing_material)
+		var lens := MeshInstance3D.new()
+		lens.name = "PurpleLens_%d" % index
+		var sphere := SphereMesh.new()
+		sphere.radial_segments = 10
+		sphere.rings = 5
+		sphere.radius = 0.34
+		sphere.height = 0.68
+		lens.mesh = sphere
+		lens.material_override = purple_material
+		lens.position = Vector3(0.0, y_position, -0.72)
+		signal.add_child(lens)
+
+
+func _build_palm_tree() -> void:
+	var palm_position := Vector3(56.0, 0.0, 178.0)
+	var trunk := StaticBody3D.new()
+	trunk.name = "LiminalPalmTree"
+	trunk.position = palm_position
+	add_child(trunk)
+
+	var collision := CollisionShape3D.new()
+	var trunk_shape := CylinderShape3D.new()
+	trunk_shape.radius = 0.42
+	trunk_shape.height = 9.2
+	collision.shape = trunk_shape
+	collision.position.y = 4.6
+	trunk.add_child(collision)
+
+	var trunk_mesh := CylinderMesh.new()
+	trunk_mesh.top_radius = 0.23
+	trunk_mesh.bottom_radius = 0.5
+	trunk_mesh.height = 9.2
+	trunk_mesh.radial_segments = 5
+	var trunk_visual := MeshInstance3D.new()
+	trunk_visual.mesh = trunk_mesh
+	trunk_visual.material_override = _make_material(Color(0.32, 0.25, 0.18), 0.96)
+	trunk_visual.position.y = 4.6
+	trunk.add_child(trunk_visual)
+
+	var leaf_material := _make_material(Color(0.1, 0.19, 0.15), 0.94)
+	for index in range(7):
+		var angle := TAU * float(index) / 7.0
+		var leaf := MeshInstance3D.new()
+		leaf.name = "PalmFrond_%d" % index
+		var leaf_mesh := BoxMesh.new()
+		leaf_mesh.size = Vector3(0.28, 0.09, 5.8)
+		leaf.mesh = leaf_mesh
+		leaf.material_override = leaf_material
+		leaf.position = Vector3(sin(angle) * 1.1, 9.0, cos(angle) * 1.1)
+		leaf.rotation.y = angle
+		leaf.rotation.x = deg_to_rad(-18.0)
+		trunk.add_child(leaf)
+
+	var red_light := MeshInstance3D.new()
+	red_light.name = "PalmRedSignal"
+	var red_sphere := SphereMesh.new()
+	red_sphere.radial_segments = 8
+	red_sphere.rings = 4
+	red_sphere.radius = 0.23
+	red_sphere.height = 0.46
+	red_light.mesh = red_sphere
+	red_light.material_override = _make_emission_material(Color(0.85, 0.08, 0.1), Color(0.9, 0.04, 0.05), 1.3)
+	red_light.position = Vector3(0.0, 8.4, -0.55)
+	trunk.add_child(red_light)

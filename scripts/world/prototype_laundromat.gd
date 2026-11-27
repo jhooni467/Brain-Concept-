@@ -288,8 +288,14 @@ func _build_vending_machine() -> void:
 	_add_box_mesh(machine, "VendingControl", Vector3(0.22, 1.62, 0.08), Vector3(0.68, 1.5, 0.66), body_material)
 	_add_box_mesh(machine, "VendingSlot", Vector3(0.52, 0.16, 0.08), Vector3(0.47, 0.48, 0.66), _make_emission_material(Color(0.3, 0.74, 0.68), Color(0.08, 0.35, 0.3), 0.6))
 
-	for product_index in range(4):
-		var product_color := [Color(0.7, 0.38, 0.22), Color(0.25, 0.52, 0.58), Color(0.72, 0.66, 0.36), Color(0.52, 0.35, 0.58)][product_index]
+	var product_colors: Array[Color] = [
+		Color(0.7, 0.38, 0.22),
+		Color(0.25, 0.52, 0.58),
+		Color(0.72, 0.66, 0.36),
+		Color(0.52, 0.35, 0.58)
+	]
+	for product_index in range(product_colors.size()):
+		var product_color: Color = product_colors[product_index]
 		_add_box_mesh(machine, "Product_%d" % product_index, Vector3(0.22, 0.42, 0.12), Vector3(-0.42 + float(product_index % 2) * 0.56, 0.82 + float(floori(float(product_index) / 2.0)) * 0.62, 0.72), _make_material(product_color, 0.45))
 
 

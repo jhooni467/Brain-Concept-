@@ -111,7 +111,6 @@ func _build_entrance(trim_material: Material, accent_material: Material) -> void
 	var frame_material := _make_material(Color(0.12, 0.16, 0.18), 0.44, 0.36)
 	var glass_material := _make_material(Color(0.28, 0.42, 0.47, 0.38), 0.18, 0.2)
 	glass_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	glass_material.albedo_color.a = 0.38
 
 	_add_box_mesh(self, "EntranceFrameLeft", Vector3(0.16, 3.9, 0.18), Vector3(-2.94, 1.95, 17.76), frame_material)
 	_add_box_mesh(self, "EntranceFrameRight", Vector3(0.16, 3.9, 0.18), Vector3(2.94, 1.95, 17.76), frame_material)
@@ -291,7 +290,7 @@ func _build_vending_machine() -> void:
 
 	for product_index in range(4):
 		var product_color := [Color(0.7, 0.38, 0.22), Color(0.25, 0.52, 0.58), Color(0.72, 0.66, 0.36), Color(0.52, 0.35, 0.58)][product_index]
-		_add_box_mesh(machine, "Product_%d" % product_index, Vector3(0.22, 0.42, 0.12), Vector3(-0.42 + float(product_index % 2) * 0.56, 0.82 + float(product_index / 2) * 0.62, 0.72), _make_material(product_color, 0.45))
+		_add_box_mesh(machine, "Product_%d" % product_index, Vector3(0.22, 0.42, 0.12), Vector3(-0.42 + float(product_index % 2) * 0.56, 0.82 + float(floori(float(product_index) / 2.0)) * 0.62, 0.72), _make_material(product_color, 0.45))
 
 
 func _build_lighting() -> void:

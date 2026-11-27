@@ -1,0 +1,119 @@
+name: Godot Android Debug APK
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-debug-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GODOT_VERSION: "4.7.2"
+  ANDROID_PLATFORM: "35"
+  ANDROID_BUILD_TOOLS: "35.0.1"
+  ANDROID_NDK: "28.1.13356709"
+  ANDROID_CMAKE: "3.10.2.4988404"
+
+jobs:
+  validate-and-export:
+    name: Validate project and export Android APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Install Android export requirements
+        shell: bash
+        run: |
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager --install \
+            "platform-tools" \
+            "platforms;android-${ANDROID_PLATFORM}" \
+            "build-tools;${ANDROID_BUILD_TOOLS}" \
+            "cmdline-tools;latest" \
+            "ndk;${ANDROID_NDK}" \
+            "cmake;${ANDROID_CMAKE}"
+
+      - name: Configure Godot Android SDK paths
+        shell: bash
+        run: |
+          mkdir -p "$HOME/.config/godot"
+          cat > "$HOME/.config/godot/editor_settings-4.tres" <<EOF
+          [gd_resource type="EditorSettings" format=3]
+
+          [resource]
+          export/android/android_sdk_path = "$ANDROID_HOME"
+          export/android/java_sdk_path = "$JAVA_HOME"
+          EOF
+
+          mkdir -p "$HOME/.android"
+          if [ ! -f "$HOME/.android/debug.keystore" ]; then
+            keytool -genkeypair \
+              -keystore "$HOME/.android/debug.keystore" \
+              -storepass android \
+              -alias androiddebugkey \
+              -keypass android \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -dname "CN=Android Debug,O=Android,C=US" \
+              -noprompt
+          fi
+
+      - name: Download Godot editor and export templates
+        shell: bash
+        run: |
+          set -euo pipefail
+          RELEASE_URL="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable"
+
+          curl --fail --location --retry 3 \
+            "$RELEASE_URL/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip" \
+            --output godot-editor.zip
+          curl --fail --location --retry 3 \
+            "$RELEASE_URL/Godot_v${GODOT_VERSION}-stable_export_templates.tpz" \
+            --output godot-templates.tpz
+
+          unzip -q godot-editor.zip
+          sudo install -m 0755 "Godot_v${GODOT_VERSION}-stable_linux.x86_64" /usr/local/bin/godot
+
+          TEMPLATE_DIR="$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
+          mkdir -p "$TEMPLATE_DIR"
+          unzip -q -j godot-templates.tpz 'templates/*' -d "$TEMPLATE_DIR"
+          godot --version
+
+      - name: Import and validate project
+        run: |
+          godot --headless --editor --path . --quit
+          godot --headless --path . --quit-after 5
+
+      - name: Export Android debug APK
+        run: |
+          mkdir -p build
+          godot --headless --path . --export-debug "Android" build/Concept-of-the-Brain-debug.apk
+          test -s build/Concept-of-the-Brain-debug.apk
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: Concept-of-the-Brain-Android-debug
+          path: build/Concept-of-the-Brain-debug.apk
+          if-no-files-found: error
+          retention-days: 14
